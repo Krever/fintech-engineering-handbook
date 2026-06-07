@@ -43,6 +43,8 @@ other than not using floating points. These representations are not mutually exc
 and how you compute with it are separate decisions, and a system often combines them, e.g. integer storage with
 `BigDecimal` for intermediate computation.
 
+**Principles touched:** No lost data - the wrong representation silently drops precision that can never be recovered.
+
 ### Rounding strategies
 
 1. Rounding is inevitable and it should be done explicitly. Any division, currency conversion, fee, interest or rate
@@ -56,3 +58,6 @@ and how you compute with it are separate decisions, and a system often combines 
 4. Rounding breaks sums. If a number is split into parts and rounding is applied, the sum of the parts might no longer
    equal the original number. Depending on the context, this might require explicit handling - e.g. explicit rounding
    account.
+
+**Principles touched:** No lost data - residuals must be tracked, not dropped. No invented data - rounding must never
+mint money that wasn't there.
