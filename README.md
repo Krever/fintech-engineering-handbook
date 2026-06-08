@@ -1,4 +1,4 @@
-# fintech-engineering-handbook
+# Fintech Engineering Handbook
 
 Welcome to the Fintech Engineering Handbook. This resource aims to describe the most important patterns used in software
 engineering, where money is the primary focus of the system. It can be read in full to get a comprehensive understanding
@@ -113,4 +113,22 @@ information you can't reconstruct later.
 
 FX (Forex, foreign exchange currency market) rates allow us to convert money between currencies.
 
-1. Time of rate is critical - 
+1. A rate is always directional. The EUR/USD rate is not the same thing as the inverted USD/EUR rate. On an exchange,
+   buying and selling are two different orders at different prices (the bid/ask spread), so the two directions don't
+   simply invert.
+2. The time of the rate is critical. While you can technically use a rate from any point in time, the most commonly used
+   are:
+    - Current-time rate - e.g. to calculate current holdings or the value of a transaction as if it happened right now.
+    - Value-date rate - e.g. to calculate change in value or a tax amount.
+3. Two kinds of rate matter for conversion:
+    1. A transactional rate is the rate a real conversion happened at. You don't store it directly - it falls out of the
+       original and result amounts.
+    2. A reference rate (mid-market or central bank) is one used for valuation and equivalence -
+       what holdings are worth right now, or a tax base at the value date - and is not a price anyone actually trades
+       at.
+4. There is no such thing as a canonical rate. Rates come from markets and vary between venues or calculation methods.
+   The closest to canonical are central bank rates, which can be used only as a reference rate and even there we can
+   have alternative sources which are just as valid.
+
+**Principles touched:** No lost data - keep the amounts (and, for reference rates, a way back to the source). No trust -
+there's no canonical rate, so the source should be part of the data.
