@@ -136,18 +136,42 @@ there's no canonical rate, so the source should be part of the data.
 ### Double-entry bookkeeping
 
 Double-entry bookkeeping is a widely used way to store financial transactions as a list of entries in the form of
-`(credit account, debit account, amount)` (this is a compact form; the classic representation uses a separate debit and credit
-row per movement). It ensures that money always comes from somewhere and always goes to somewhere. External providers get
-dedicated accounts too, so money entering/leaving the system is still tracked. Because every entry moves the same amount
+`(credit account, debit account, amount)` (this is a compact form; the classic representation uses a separate debit
+and credit row per movement). It ensures that money always comes from somewhere and always goes to somewhere. External
+providers get dedicated accounts too, so money entering/leaving the system is still tracked. Because every entry moves the same amount
 out of one account and into another, the books always balance - money is only moved, never created or destroyed.
 
-In this methodology, balance is never stored directly, but derived from the movements of money. 
+In this methodology, balance is never stored directly, but derived from the movements of money.
 
 Accounts are labeled as assets, liabilities or equity, so that the **accounting equation**
-(`assets = liabilities + equity`) holds and each account has a defined side on which it increases. 
+(`assets = liabilities + equity`) holds and each account has a defined side on which it increases.
 
-A single transaction will usually create multiple movements, e.g. one accounting for the net amount, the other for the fees.
+A single transaction will usually create multiple movements, e.g. one accounting for the net amount, the other for the
+fees.
 
 By convention, posted entries are immutable - corrections are made with new compensating entries, never edits.
 
 **Principles touched:** No invented data - money is only ever moved between accounts, never created or destroyed.
+
+### Invariants
+
+In any system there exist special properties that must always hold - we call them invariants. One such invariant is
+the accounting equation mentioned above. Your business stakeholders might define many such conditions that then have to
+be enforced.
+
+There are 3 primary ways to enforce invariants:
+
+1. **By construction** - make sure that the system allows creating only valid objects, so invalid states are
+   unrepresentable. This can be done through a variety of techniques: factory methods (smart constructors), type-level
+   programming (e.g. refined types), database constraints.
+2. **Runtime checks** - check that invariants hold when executing logic. This can be assertions in production code or
+   tests - property-based testing shines here (e.g. "for any sequence of postings, the books balance").
+3. **Post-factum** - analyse the data persisted by the system looking for any violations, e.g. reconciliation jobs or
+   nightly checks that ledger balances still satisfy the accounting equation.
+
+What's important: those methods are complementary and you will usually use all of them side by side to achieve the
+desired level of trust. By construction is the strongest but cannot express everything (especially cross-aggregate or
+cross-system invariants), runtime checks catch violations at the point of occurrence, and post-factum is the only one
+that catches bugs that already shipped - but catches them late.
+
+**Principles touched:** No trust - invariants are verified, not assumed; even your own code's output gets checked.
