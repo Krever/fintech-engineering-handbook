@@ -236,3 +236,109 @@ editing the balance.
 
 **Principles touched:** No invented data - clamping a negative balance to zero mints money. No trust - the external
 world can force an overdraft no matter what your checks say.
+
+### Audits and audit trails
+
+Financial systems are subject to regulatory scrutiny in the form of various audits. Some of the things that might be
+verified during an audit:
+
+* are company funds not commingled with user funds or used for company expenses?
+* are all revenues registered, reported and explainable? E.g. can you pinpoint the transactions that contributed to a
+  particular revenue stream in a particular period?
+* is the information provided to the external world (e.g. users or the tax office) matching reality? E.g. does the
+  company hold as much in assets as it owes its users?
+* are the funds protected against external threats? (e.g. who can access the funds and how)
+
+To answer those and many other questions, financial systems have to keep track of not only the current state but the
+full history of how that state came to be. This history is the **audit trail**: a record of everything that happened,
+detailed enough that any balance, report or decision can be explained and reproduced from it.
+
+A useful audit trail captures, for every change: what happened, when (see value time vs booking time), who or what
+triggered it (a user, an operator, an automated job), and why (a reference to the order, instruction or incident that
+caused it). Money movements are the obvious subject, but manual interventions, configuration changes (fee schedules,
+rate sources, limits) and permission changes need trails too.
+
+**Principles touched:** No lost data - current state alone can't answer an audit's questions; only the full history can.
+
+#### Event sourcing
+
+Event sourcing is probably the most principled and systemic approach to building an audit trail. In ES, instead of
+storing current state with a log next to it, you
+store only the events and derive state from them. The double-entry ledger is an example of this pattern applied to
+money -
+balance is never stored, it is calculated from the stored entries. With this approach the trail is a primary
+artifact
+and cannot drift away from reality.
+
+A few practical notes:
+
+1. You don't need full event sourcing everywhere. The ledger already covers money; for surrounding domains a
+   conventional model with a reliable change log may be enough.
+2. Derived state (balances, projections) can be cached or snapshotted for performance.
+3. Building the projections is work intensive, and you might need a lot of them. You cannot effectively query your
+   primary data set (events) for anything, so you need to build dedicated or generic projections to look into your data.
+4. Events live for years, so plan for schema evolution: today's code must still read events written long ago.
+
+In other words: event sourcing is a very good solution when an audit trail is required, but it comes with a very high
+price in terms of system complexity.
+
+**Principles touched:** No lost data - when state is derived from events, the trail can't drift out of sync with reality
+because it *is* the source of truth.
+
+#### Immutability
+
+An audit trail that can be edited proves nothing, hence records can never be updated or deleted. Our log must be
+append-only, and every correction should be a new record (see below).
+
+Immutability is an invariant, and the usual toolbox applies:
+
+1. By construction - append-only tables, revoking `UPDATE`/`DELETE` at the database-permission level.
+2. Runtime checks - the application layer exposes no mutating operations on posted records.
+3. Post-factum - tamper evidence: checksums or hash chains over the records, periodically verified, so that any
+   after-the-fact modification is detectable.
+
+When building a real system bugs are unavoidable and might require you to fix the event log/audit trail. In those cases
+it's sometimes easier to update the trail in place instead of keeping it strictly immutable. To balance those two
+worlds it's important to understand your reporting schedule and obligations - usually data has to be kept in stone only
+once it has been reported, e.g. when the financial statement has been shared at the end of the month. Until then you
+might still be able to modify your data in place, if you detect the problem and fix it before it leaves your system.
+
+**Principles touched:** No trust - an editable history proves nothing; immutability and tamper evidence make the trail
+trustworthy to an outsider, including yourself investigating an incident.
+
+#### Reversals and corrections
+
+Mistakes still happen, for example a wrong amount gets posted or a transaction lands on the wrong account. Immutability
+means fixing forward - post a new compensating entry and link it to the
+record it corrects, in both directions.
+
+1. A **reversal** negates the original in full, as if it never happened economically - but it stays visible in the
+   history, together with the original.
+2. A **correction** (adjustment) books the difference between what was recorded and what should have been, or reverses
+   and re-posts with the right values.
+3. Corrections often land in a different reporting period than the original (see value time vs booking time) - the
+   linkage is what lets reports attribute them correctly and distinguish real activity from cleanup.
+
+The last point is particularly important - when posting corrections/reversals you will need to decide whether to
+backdate the event
+(specify a value time in the past) or not. Here a lot depends on the reporting schedule again - usually you won't be
+allowed to backdate anything to an already closed period, because it was already reported to the external world.
+
+**Principles touched:** No invented data - mistakes are fixed by posting linked compensating entries, never by editing
+or deleting what was already recorded.
+
+#### Immutability vs GDPR
+
+GDPR's right to erasure appears to contradict an immutable ledger. In practice it's quite easy to make it a non-problem:
+
+1. Financial records are largely exempt - legal retention obligations (accounting law, AML, typically 5-10 years) take
+   precedence over erasure requests for transactional data. You don't delete postings in that timeframe.
+2. The exemption covers what you are obliged to keep, not everything you'd like to keep. Separate personal data from
+   financial data so that the immutable ledger references users only by opaque internal identifiers, while PII (names,
+   addresses, documents) lives in a separate, mutable store that can be redacted or erased independently.
+3. Where personal data must be embedded in immutable records (e.g. event payloads), **crypto-shredding** works: encrypt
+   each user's personal fields with a per-user key and erase by deleting the key. Erasure becomes a key deletion, not a
+   rewrite of history.
+
+**Principles touched:** No lost data - separating PII from financial data lets you honor erasure without losing the
+financial history you're obliged to keep.
