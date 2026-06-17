@@ -342,3 +342,46 @@ GDPR's right to erasure appears to contradict an immutable ledger. In practice i
 
 **Principles touched:** No lost data - separating PII from financial data lets you honor erasure without losing the
 financial history you're obliged to keep.
+
+## External world
+
+Interacting with the external world - whether in the form of 3rd party providers (payments, KYC, AML, banks,
+custodians, etc.) or internal services - is unavoidable. Our job is to build a system that stays correct regardless of
+how unreliable those dependencies become.
+
+### Idempotency
+
+In a distributed system it's impossible to guarantee exactly-once delivery - any call can be interrupted and we won't
+know whether it reached the other side or not. To make sure a message is delivered, we have to retry every such call.
+But in doing so we risk delivering it more than once, hence its processing needs to be idempotent - the same message
+delivered twice must trigger the processing only once.
+
+1. Idempotency keys vs business-derived idempotency (e.g. deduplicating on the payload). An explicit key is usually the
+   simpler and better solution - deriving it from the data is fragile, e.g. it's hard to tell whether two transactions
+   with the same amount are a duplicate or two genuine operations. When using idempotency keys make sure they are scoped
+   to a particular operation and client.
+2. Idempotency on errors - when a call failed the first time, should a retry re-raise the stored error or re-trigger the
+   processing? It's usually simpler and easier to reason about when we treat the error as the idempotent result and
+   replay it. The client can always retry with a new key. A lot depends on the nature of errors - permanent ones (e.g.
+   validation) should be replayed as-is while temporary ones (e.g. network failure) might be reprocessed.
+3. Validating the payload for a repeated key - it's good practice to ensure a repeated call carries the same payload as
+   the original. In practice this gets costly and buys only a little extra confidence, at the cost of a more complex
+   implementation and less flexibility (the caller might change the request for a good reason).
+4. Building reliable idempotency at scale can be a complex endeavour - make sure to dedicate enough effort to it. Not
+   only might you need to deduplicate billions of requests,
+   but you also have to get the behavior right under concurrent access (e.g. two duplicate calls arriving in the same
+   millisecond). Your idempotency barrier has to be atomic.
+5. You might be tempted to rely on an idempotency time window - e.g. dedupe only within 24h. This significantly
+   simplifies the implementation (otherwise the data volume grows forever) but at the cost of correctness. Make this
+   tradeoff only if you absolutely have to,
+   because it will haunt you later.
+6. It's good practice to test for retries. One of the better approaches is to bake a generic middleware into your
+   integration or system tests that automatically repeats every call.
+7. Make sure you handle out-of-order retries. Your system needs to stay idempotent even if it already moved to a new
+   state - e.g. keep putting the funds on hold idempotent even if they were already released.
+
+Idempotency matters on both sides - when you make calls and when you receive them. Keep it in mind every time you
+consume or expose an operation.
+
+**Principles touched:** No invented data - retries are unavoidable, so processing must collapse duplicate deliveries
+into a single effect instead of moving money twice.
