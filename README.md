@@ -385,3 +385,40 @@ consume or expose an operation.
 
 **Principles touched:** No invented data - retries are unavoidable, so processing must collapse duplicate deliveries
 into a single effect instead of moving money twice.
+
+### Handling webhooks
+
+Webhooks are the most common way to receive signals from external systems, but processing them safely is not trivial.
+While we focus here on webhooks (HTTP endpoints you expose, called by an external system with a payload defined by that
+system) many of the points apply to other transport methods as well.
+
+1. Don't assume ordering of events - messages can arrive out of order or carry stale data, so the last webhook you
+   received is not necessarily the latest truth. Don't blindly overwrite your state with whatever just arrived;
+   reconcile
+   it against what you already know (e.g. by querying the API for the current state).
+2. Don't assume validity of data - webhooks might come from a secondary part of the issuer's system and carry stale or
+   improperly transformed data. A good practice is to ignore the content of the webhook and use it only as a trigger to
+   query the API for the authoritative state. Beware that the API can be eventually consistent and lag behind the
+   webhook, so a query right after the trigger may still return the old state - be ready to retry.
+3. Don't assume delivery - webhooks will get lost sooner or later, regardless of how strong a re-delivery policy the
+   issuer promises. You have to be prepared to handle a missing webhook, which usually means an independent process that
+   fixes the completeness of your data. See reconciliation.
+4. Don't assume single delivery - the same webhook will be delivered more than once. Processing must be idempotent. See
+   idempotency.
+5. Acknowledge fast, process asynchronously - return a 2xx as soon as you've durably stored the raw event, and do the
+   real
+   work asynchronously. If you process inline and are slow, the issuer can time out and retry, multiplying your load.
+6. Persist the raw payload - store what you received verbatim before acting on it. It will not only make processing more
+   reliable but will also act as your audit trail of what the provider actually said. It also lets you reprocess the
+   message after a bug without asking the provider to resend.
+7. Verify the caller - the usual mechanism is for the issuer to attach a signature of the payload, generated with an
+   asymmetric key whose public half is published, so you can verify the message really came from them. One caveat:
+   verify the signature over the *raw bytes* you received, not a re-serialized payload (re-serialization changes bytes
+   and breaks the signature). Even with this, prefer not to trust the content (see point 2).
+
+There is a recurring theme here: don't trust the webhook. Treat it as a hint that *something*
+happened, not as a reliable, ordered, authentic statement of *what* happened.
+
+**Principles touched:** No trust - a webhook is an unauthenticated, unordered, possibly-lost, possibly-duplicated hint;
+verify the source and confirm the actual state against the API. No lost data - persist the raw event and back delivery
+up with reconciliation so a dropped webhook doesn't mean a dropped fact.
