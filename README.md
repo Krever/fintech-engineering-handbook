@@ -422,3 +422,44 @@ happened, not as a reliable, ordered, authentic statement of *what* happened.
 **Principles touched:** No trust - a webhook is an unauthenticated, unordered, possibly-lost, possibly-duplicated hint;
 verify the source and confirm the actual state against the API. No lost data - persist the raw event and back delivery
 up with reconciliation so a dropped webhook doesn't mean a dropped fact.
+
+### Consuming APIs
+
+Sooner or later you will have to call someone else's API, e.g. a payment provider, a custodian, a blockchain node or a
+KYC vendor. You don't control its code, its quality or its uptime, so the safe default is to assume it will misbehave
+and to build defensively around it.
+
+1. Don't trust the schema. The response will not always match the contract you were given - fields can go missing, types
+   can change, nulls can appear where they shouldn't. Validate the important pieces at the boundary and fail loudly on
+   anything you didn't expect, so malformed data cannot leak into the system. At the same time, never validate the
+   pieces you don't need, as it might cause unnecessary outages when a third party breaks its contract. And they will.
+2. Be ready for all kinds of weirdness and imperfect engineering. Everything you consider a questionable engineering
+   practice will rear its head given enough time: tokens passed in URLs, lost precision, HTTP codes that don't mean what
+   they should (a `200` carrying an error body), inconsistent pagination, custom date formats - all of this is normal
+   when integrating with the outside world. Don't get frustrated by it; treat it as the job rather than the exception.
+3. All calls will fail at some point. Design the system so that it can handle a lack of response. Retries and timeouts
+   are necessary protection.
+4. Circuit breakers are usually optional. They are mostly a courtesy toward an overloaded server, paid for by you with
+   added complexity on the client side. It's reasonable to expect the server to handle its own load and drop requests it
+   can't serve. That being said, a circuit breaker also protects your latency and finite resources (threads,
+   connections, etc.), so employ one when it's really needed.
+5. Mind the quotas. Rate limits and usage quotas are easy to forget but can be a source of nasty weekend outages. It's
+   good to do a bit of napkin math up front (expected call volume against the provider's limits) so you find out before
+   it causes a problem.
+6. Store every request and response. It might sound excessive, but it can be a lifesaver during an investigation when an
+   external API starts returning something it never should. Persist what you sent and what came back, in a structured,
+   queryable form (e.g. a Redshift table). This will also be your audit trail and evidence when the provider's behavior
+   is disputed, and your material for reprocessing after a bug.
+7. Aim for provider redundancy for the most critical parts. You can never fully trust the provider, so when the stakes
+   are highest, consider using more than one for the same purpose. This can mean validating the data against multiple
+   sources (e.g. two blockchain nodes) or having a backup bank partner, crypto custodian or KYC vendor. This approach is
+   extremely expensive (development, fees and complexity-wise) but might be necessary to achieve the desired level of
+   reliability.
+8. Don't expect too much from the testing environment. If a provider gives you testing/sandbox access, that's already a
+   good sign. Those environments are fine for basic scenarios but will usually diverge very significantly from the
+   production setup. Be prepared to test in production (e.g. through canary releases and controlled usage with small
+   impact).
+
+**Principles touched:** No trust - the provider's code, schema and uptime are all outside your control, so verify facts
+against independent sources and validate everything at the boundary. No lost data - persisting every request and
+response keeps a record you can reconcile against and reprocess from.
