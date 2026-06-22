@@ -505,3 +505,33 @@ and to build defensively around it.
 - **No trust** - the provider's code, schema and uptime are all outside your control, so verify facts against
   independent sources and validate everything at the boundary.
 - **No lost data** - persisting every request and response keeps a record you can reconcile against and reprocess from.
+
+### Reconciliation
+
+Any system that relies on external data is prone to data drift - a situation where one system doesn't match the other.
+For example, you might miss a webhook, or a transaction might be posted to the ledger but not reflected in the external
+provider's system. In all such cases we need reconciliation: a process that aligns the two systems. While we say "two",
+in practice it can be more than that, e.g. ledger, payment processor and the bank, but this doesn't change anything in
+how to approach the problem.
+
+1. Cadence - depending on the exact context and constraints, reconciliation might be done hourly, daily, monthly or even
+   yearly.
+2. Nature of drift - data can be missing (which is an easy case) or different (e.g. the same transaction with different
+   amounts, which is much more complicated to solve). Timing also matters a lot: if settlements happen at T+3, records
+   will stay unreconciled for 3 days - that logic should be incorporated into the process so that we don't alert on
+   those cases.
+3. Matching algorithm - knowing what to compare between the two systems is the hard part. Usually you want to persist
+   the external provider id within your system so that matching is straightforward. If this is not the case, heuristic
+   algorithms enter the game (e.g. matching by amount and time).
+4. One-to-many - in some cases you will have to reconcile multiple records on one side with one on the other, e.g.
+   a single settlement transfer might cover a couple of transactions.
+5. Aligning is not trivial - it goes without saying we can't simply overwrite the data to make the reconciliation happy.
+   Each discrepancy found should be understood and fixed through first-class support, e.g. a correction record,
+   reprocessing of webhook data etc.
+
+**Principles touched:**
+
+- **No trust** - reconciliation is how we verify across independent sources instead of believing any single one is
+  right.
+- **No lost data** - it's the safety net that catches the dropped fact - the missing webhook, the unsettled transfer -
+  before it disappears for good.
