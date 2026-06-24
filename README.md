@@ -1,5 +1,9 @@
 # Fintech Engineering Handbook
 
+> **🚧 Work in progress.** This handbook is being actively written and is far from complete - sections are still being
+> drafted, reordered and revised. Expect rough edges, gaps and changes. If you've arrived early, thanks for your
+> patience - it's getting there.
+
 Welcome to the Fintech Engineering Handbook. This resource aims to describe the most important patterns used in software
 engineering, where money is the primary focus of the system. It can be read in full to get a comprehensive understanding
 or in parts when dealing with a particular problem.
