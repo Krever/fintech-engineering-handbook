@@ -32,7 +32,7 @@ Everything you will read below is a way to adhere to the three principles:
 ## Representing money
 
 Before you can move or record money, you have to represent it. These are the decisions about how a monetary value is
-modeled, stored, computed and converted - get them wrong and every layer above inherits the error.
+modeled, stored, computed and converted. Getting them wrong means every layer above inherits the error.
 
 ### Precision handling
 
@@ -311,9 +311,8 @@ GDPR's right to erasure appears to contradict an immutable ledger. In practice i
 
 ## Executing money flows
 
-A money operation is rarely a single write. It spans steps, concurrency and failure, and has to stay correct - never
-inventing or losing money - through all of it. These are the patterns that keep a single flow correct, from the
-invariants it must preserve to surviving a crash mid-way.
+A money operation is never a single write. It spans steps, concurrency and failure, and has to stay correct through all of it. 
+These are the patterns that help to keep it correct.
 
 ### Invariants
 
