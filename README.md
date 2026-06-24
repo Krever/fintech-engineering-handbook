@@ -661,8 +661,10 @@ which you can choose the techniques with the most impact on your system.
 8. **Testing in production.** Some confidence is only obtainable against the real thing. Provider sandboxes diverge
    significantly from production (see consuming APIs), so the final proof that an integration works often has to happen
    live - through a canary release, a controlled rollout with a small blast radius, or synthetic transactions that push
-   small real amounts through the system continuously as a health check. The money-specific caveat is that these are real
-   movements: a test in production moves real money, so it must go through the same ledger, reconciliation and audit trail
+   small real amounts through the system continuously as a health check. The money-specific caveat is that these are
+   real
+   movements: a test in production moves real money, so it must go through the same ledger, reconciliation and audit
+   trail
    as everything else, be clearly tagged, and be cleaned up through the normal correction/reversal machinery - never a
    backdoor that bypasses the books.
 
@@ -674,3 +676,203 @@ which you can choose the techniques with the most impact on your system.
   or mint money.
 - **No lost data.** Round-trip and backward-compatibility tests prove that precision and history survive boundaries and
   the passage of time.
+
+## Appendix A: Know your domain
+
+The hardest part of joining fintech is often not the code but the vocabulary and concepts behind. The field is full of
+words that sound ordinary but mean something precise, and acronyms that everyone around you uses without ever expanding.
+
+Caveats: terms a layperson already knows (deposit, withdrawal, transfer, currency) are skipped, and so
+are the exotic corners you can learn when you get there. We try to focus on the most important terms. Where the handbook
+already covers a concept properly, the entry links to that section instead of repeating it.
+
+### Accounting & ledgers
+
+- **Ledger** — the system of record for money movements; the source of truth from which balances are derived (see
+  [Double-entry bookkeeping](#double-entry-bookkeeping)).
+- **General ledger vs sub-ledger** — the single consolidated book vs a detailed book for one domain (e.g. one per user
+  or product) that rolls up into it.
+- **Debit / credit** — the two sides of every entry. Which one *increases* an account depends on the account's type,
+  not on "money in vs money out" (see [Double-entry bookkeeping](#double-entry-bookkeeping)).
+- **Posting** — committing an entry to the ledger; "posted" means recorded and, by convention, immutable.
+- **Chart of accounts** — a catalogue of the accounts that can be posted to; a single system can have several (e.g.
+  per legal entity, per book, or per reporting standard).
+- **Account type** — asset / liability / equity (plus revenue / expense), so the **accounting equation** holds and each
+  account has a defined side on which it increases (see [Double-entry bookkeeping](#double-entry-bookkeeping)).
+- **Receivable / payable** — money owed *to* you / money owed *by* you.
+- **IOU** — informally, a liability: a record that you owe someone money. A user's balance on a custodial platform is an
+  IOU from the platform to the user, which is why it sits on the liability side of the books.
+- **Accrual vs cash basis** — recognising money when it's earned or owed vs when it actually moves.
+- **Trial balance** — a check that total debits equal total credits across the books.
+- **Suspense / clearing account** — a temporary holding account for money that's in transit or not yet attributable.
+- **Write-off** — booking a balance you no longer expect to recover as a loss (see
+  [Handling overdrafts](#handling-overdrafts)).
+- **Commingling** — mixing company funds with user funds; a regulatory red flag (see
+  [Audits and audit trails](#audits-and-audit-trails)).
+- **Reconciliation break** — a single unmatched discrepancy surfaced by [reconciliation](#reconciliation).
+
+### Money & FX
+
+- **Money (as a type)** — an amount paired with a currency (see
+  [Currency handling](#currency-handling)).
+- **Minor units** — the smallest indivisible unit of a currency; amounts are often stored as integers of these (€12.34
+  → `1234`) (see [Precision handling](#precision-handling)).
+- **Basis point (bp / "bip")** — one hundredth of a percent (0.01%); fees and rates are routinely quoted in these.
+- **Notional** — the face value a calculation is based on, which may be far larger than the cash that actually changes
+  hands.
+- **Fiat vs crypto** — state-issued currency vs blockchain-native asset
+- **Stablecoin** — a token pegged to a reference asset, usually a fiat currency like USD.
+- **Pegged / wrapped / bridged** — representations connected to an underlying asset but *not* equivalent to it (see
+  [Currency handling](#currency-handling)).
+- **Bid / ask / spread** — the buy price, the sell price, and the gap between them.
+- **Mid-market rate** — the midpoint between bid and ask; a reference point, not a price you can actually trade at (see
+  [FX Rates](#fx-rates)).
+- **Reference rate** — a rate used for valuation and equivalence (holdings value, a tax base), not for an actual trade
+  (see [FX Rates](#fx-rates)).
+- **Mark-to-market** — revaluing a holding at the current market rate rather than the price it was acquired at.
+
+### Transactions, timing & settlement
+
+- **Value date / booking date / settlement date** — when it happened / when we recorded it / when money actually moved
+  (see [Value time vs booking time vs settlement time](#value-time-vs-booking-time-vs-settlement-time)).
+- **T+X** — something (e.g. settlement) happens X business days after the value date (e.g. T+2).
+- **Clearing vs settlement** — agreeing who owes what vs actually transferring the money.
+- **Cut-off time** — the daily deadline after which a transaction rolls into the next settlement window.
+- **Float** — money that, mid-transfer, appears to exist in both systems at once (or in neither).
+- **Netting** — offsetting many obligations into a single net transfer instead of settling each one gross.
+- **Backdating** — assigning a value date earlier than the booking date (see
+  [Value time vs booking time vs settlement time](#value-time-vs-booking-time-vs-settlement-time)).
+- **Reversal / correction** — negating a posting in full as if it never happened economically vs booking the difference
+  between what was recorded and what should have been (see [Reversals and corrections](#reversals-and-corrections)).
+
+### Payments, rails & cards
+
+- **Payment rail** — the underlying network a payment travels over (SEPA, SWIFT, ACH, card networks, a blockchain).
+- **IBAN / SWIFT / SEPA / ACH / FPS / CHAPS / wire** — identifiers and networks for moving fiat between banks.
+- **Originator / beneficiary** — who sends / who receives a transfer (also remitter / payee, payer / payee).
+- **PSP (payment service provider)** — a vendor that connects you to one or more rails.
+- **Nostro / vostro account** — "our money held at their bank" / "their money held at ours"; the accounts that make
+  cross-bank transfers work.
+- **Omnibus account** — one pooled account holding many users' funds together, with per-user balances tracked
+  internally. Legitimate pooling, as opposed to commingling.
+- **FBO ("for benefit of") account** — an account a company holds on behalf of its users.
+- **Sweep** — automatically moving balances between accounts on a schedule (e.g. into cold storage or an
+  interest-bearing account).
+- **Chargeback** — a forced reversal of a card payment, initiated by the cardholder's bank.
+- **Issuer / acquirer** — the cardholder's bank / the merchant's bank.
+- **Interchange** — the fee the acquirer pays the issuer on each card transaction; the bulk of card-processing cost.
+- **Authorization vs capture** — placing a hold on funds vs actually charging them; the card world's version of
+  [funds reservation](#funds-reservation).
+- **Dunning** — the retry-and-notify process for recovering a failed recurring payment.
+
+### Trading & markets
+
+- **Order book** — the live list of outstanding buy (bid) and sell (ask) orders at each price level.
+- **Market vs limit order** — execute now at the best available price (takes liquidity) vs only at a set price or better
+  (rests on the book, provides liquidity).
+- **Maker / taker** — maker adds a resting order to the book, taker crosses the spread and removes one; fees usually
+  differ.
+- **Slippage** — the difference between the expected price and the price actually filled.
+- **Liquidity / depth** — how much can be traded before the price moves; thin books move more.
+- **Spot** — buying or selling the asset itself for immediate delivery.
+- **Derivative** — a contract whose value derives from an underlying asset rather than the asset itself.
+- **Futures / perpetual (perp)** — a contract to trade at a future date / one with no expiry, kept near spot by a
+  funding rate.
+- **Funding rate** — periodic payment between longs and shorts that tethers a perp's price to the index.
+- **Long / short** — a position that profits when the price rises / falls.
+- **Leverage / margin** — controlling a position larger than your capital / the collateral posted to open and maintain
+  it.
+- **Liquidation** — forced closing of a position when its margin falls below the maintenance requirement.
+- **Haircut** — a discount applied to the value of collateral to cushion against price moves.
+- **Counterparty** — the other side of a trade or contract; "counterparty risk" is the risk they fail to deliver.
+- **AUM / AUC** — assets under management (client assets the platform actively manages, usually under a fee-bearing
+  mandate) vs assets under custody (client assets it merely safekeeps). The same holdings can be one, the other, or
+  both.
+
+### Custody & crypto
+
+- **Custody** — who controls the assets: self-custody (the user holds the keys) vs custodial (the platform or a
+  custodian holds them).
+- **Hot / cold wallet** — keys kept online for quick access vs kept offline for security.
+- **Private key / public key / address** — the secret that authorises spending / its derived public identifier / where
+  funds are received.
+- **Seed phrase** — the human-readable backup that reconstructs a wallet's keys.
+- **Multisig / MPC** — requiring several keys (or key-shares) to authorise a transfer, so no single device can move
+  funds alone.
+- **Gas / network fee** — the fee paid to get a transaction included on a blockchain.
+- **Confirmation / finality** — a block built on top of the one containing your transaction / the point at which it can
+  no longer be reversed. More confirmations = more finality.
+- **Reorg** — a blockchain reorganisation that can undo recently confirmed transactions; the reason finality isn't
+  instant.
+- **Mempool** — the pool of pending transactions waiting to be included in a block.
+- **UTXO vs account model** — Bitcoin-style "spend whole coins, receive change" vs Ethereum-style running balances; the
+  two demand different accounting.
+- **Token vs coin** — an asset issued on top of a chain (e.g. an ERC-20) vs a chain's native asset (BTC, ETH).
+- **Dust** — an amount so small that the network fee to move it exceeds its value.
+- **Address whitelisting (allow-listing)** — restricting withdrawals to a set of pre-approved addresses.
+
+### Compliance & regulation
+
+- **KYC** — Know Your Customer; verifying a user's identity.
+- **AML / CFT** — Anti-Money-Laundering / Countering the Financing of Terrorism; controls to detect and prevent illicit
+  funds.
+- **Sanctions screening** — checking parties against sanctioned-entity lists.
+- **PEP** — politically exposed person; a higher-risk customer category requiring extra diligence.
+- **SoF / SoW** — source of funds / source of wealth; evidence of where a customer's money came from.
+- **Travel Rule** — the requirement to share originator and beneficiary information on transfers above a threshold.
+- **VASP** — Virtual Asset Service Provider; the regulatory label for a crypto business such as an exchange or
+  custodian.
+- **MiCA** — the EU's Markets in Crypto-Assets regulation.
+- **Segregation of duties** — splitting a sensitive action across people so no single person can complete it alone.
+- **Audit / audit trail** — external scrutiny that the books and controls reflect reality / the recorded history that
+  lets any balance or decision be reproduced (see [Audits and audit trails](#audits-and-audit-trails)).
+
+### Resources
+
+No single book covers money systems end to end, so the list below is grouped by layer. Each entry notes what it covers
+and who it's pitched at, so you can pick by what you're missing.
+
+**Accounting & ledgers**
+
+- [*Accounting for Computer Scientists*](https://martin.kleppmann.com/2011/03/07/accounting-for-computer-scientists.html)
+  (essay, free online) — maps double-entry bookkeeping onto a graph/data model, written for engineers rather than
+  accountants.
+- [*The Accounting Game: Basic Accounting Fresh from the Lemonade Stand*](https://www.goodreads.com/book/show/420846.Accounting_Game)
+  — accounting from first principles via a running lemonade-stand example; assumes no finance background.
+- [Modern Treasury, *How to Scale a Ledger*](https://www.moderntreasury.com/journal/how-to-scale-a-ledger-part-i)
+  (article series, free online) — building a production ledger from a software-engineering angle.
+
+**Payments & cards**
+
+- [*Payments Systems in the U.S.*](https://www.goodreads.com/book/show/36055478-payments-systems-in-the-u-s) — a
+  reference-style tour of how money moves between banks (cards, ACH, wires, checks). US-centric; thorough and on the
+  dry side.
+- [*The Anatomy of the Swipe*](https://www.goodreads.com/book/show/53521551-the-anatomy-of-the-swipe) — what happens
+  between tapping a card and the money arriving, pitched at builders and beginners.
+
+**Markets & trading**
+
+- [*Trading and Exchanges: Market Microstructure for Practitioners*](https://www.goodreads.com/book/show/1290158.Trading_and_Exchanges)
+  — where order books, makers/takers and spreads come from; a long, detailed practitioner reference.
+
+**Crypto**
+
+- [*Mastering Bitcoin*](https://www.goodreads.com/book/show/21820378-mastering-bitcoin) and
+  [*Mastering Ethereum*](https://www.goodreads.com/book/show/33584554-mastering-ethereum) — engineering-level references
+  for the two models a fintech engineer keeps meeting (UTXO and account). Technical; aimed at developers.
+
+**The engineering half**
+
+- [*Designing Data-Intensive Applications*](https://www.goodreads.com/book/show/23463279-designing-data-intensive-applications)
+  — idempotency, logs, consistency and the failure modes this handbook keeps returning to, from the systems side.
+
+**KYC & AML**
+
+These are written for compliance professionals rather than engineers, so reach for them only when you need the domain
+itself, not the integration.
+
+- [*Anti-Money Laundering in a Nutshell*](https://www.goodreads.com/book/show/23466132-anti-money-laundering) — a short,
+  awareness-level introduction to what laundering is and how detection and reporting work.
+- [*Mastering Anti-Money Laundering and Counter-Terrorist Financing*](https://www.goodreads.com/book/show/13698660) — a
+  heavier practitioner guide to building an AML/CTF framework, with checklists and example documents.
+
