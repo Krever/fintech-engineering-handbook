@@ -427,6 +427,35 @@ consume or expose an operation.
 - **No invented data** - retries are unavoidable, so processing must collapse duplicate deliveries into a single effect
   instead of moving money twice.
 
+### Full resumability
+
+A money flow rarely happens in a single step. A withdrawal might reserve funds, run compliance checks, register the
+operation in an external system and finally settle. Such a sequence is stretched across time and can die between any two
+of those steps, so the safe assumption is that it will: assume failure every two steps. A flow can therefore never
+assume it runs to completion in one go, and a half-finished one must always land in a recoverable state, never an
+inconsistent one.
+
+1. Persist progress, don't keep it in memory. Model the flow as an explicit state machine whose state is durably stored,
+   and commit each step's completion before starting the next. A restart must be able to tell exactly where the flow
+   was.
+2. Something must resume stalled flows. An independent driver (a scheduler, worker or poller) has to pick up incomplete
+   flows and push them forward. A crash of the orchestrator must not strand a flow forever.
+3. Every step must be safe to re-run. On resume you may re-execute a step that already partially happened, so each one
+   has to be idempotent (see idempotency).
+4. External effects can't be rolled back - roll forward or compensate. Once you've called the outside world you can't
+   un-call it, and a database rollback won't undo it. So you either retry forward until the flow completes, or, when a
+   later step fails for good, post compensating actions to unwind the earlier ones (the saga pattern).
+
+You can use a durable-execution engine (e.g. Temporal, Camunda, Workflows4s, AWS Step Functions) or hand-roll your own
+persistent state machine.
+
+**Principles touched:**
+
+- **No lost data** - a crash in the middle of a flow must never lose track of in-flight money; persisted progress is
+  what lets the flow be picked up and finished.
+- **No invented data** - resuming re-runs steps, so they must re-apply without double-counting - the flow completes
+  once, never pays twice.
+
 ### Handling webhooks
 
 Webhooks are the most common way to receive signals from external systems, but processing them safely is not trivial.
@@ -551,14 +580,16 @@ state without publishing (because it genuinely failed but we didn't roll back).
 
 The textbook answer is a 2-phase commit/distributed transaction, but it's rarely used due to its complexity and the lack
 of a good way to standardize and reuse the approach. Instead the industry came up with the "outbox pattern", where a
-"publishing" event is written transactionally (with the state change) into a dedicated store and from there it's reliably
+"publishing" event is written transactionally (with the state change) into a dedicated store and from there it's
+reliably
 processed (take a row, retry until success). In other words, we reliably save "publishing intent" and then process it
 later.
 
 Another way to solve this problem is through Change Data Capture (CDC) - an automated mechanism that detects changes
 committed to the database (typically by tailing its write-ahead/replication log) and turns them into a stream of events.
 Because it reads straight from the log, every committed change is captured and nothing is missed, without any explicit
-publishing code in the application. Tools like Debezium or AWS DMS implement this off the shelf. The tradeoff is coupling
+publishing code in the application. Tools like Debezium or AWS DMS implement this off the shelf. The tradeoff is
+coupling
 and operational weight: raw CDC emits events shaped like your table rows and needs postprocessing to avoid leaking the
 internal schema to consumers.
 
