@@ -1,0 +1,79 @@
+<script>
+// Two sidebar enhancements that Quarto can't express declaratively for a
+// single-document, left-TOC layout:
+//   1. A "Take it with you" download section pinned below the TOC.
+//   2. A scrollspy that highlights the current section as you scroll/click
+//      (Quarto's built-in highlight does not track scroll for a left TOC).
+(function () {
+  // External links shown in the sidebar footer. Edit these two URLs as needed.
+  var GITHUB_URL = 'https://github.com/Krever/fintech-engineering-handbook';
+  var LINKEDIN_URL = 'https://www.linkedin.com/in/krever/';
+  // ElevenReader share link — paste the real URL after publishing the audiobook.
+  var AUDIOBOOK_URL = ''; // e.g. 'https://elevenreader.io/...' ; empty = hidden
+
+  function injectFooter() {
+    const sidebar = document.querySelector('#quarto-sidebar-toc-left');
+    if (!sidebar || sidebar.querySelector('.sidebar-footer')) return;
+    const footer = document.createElement('div');
+    footer.className = 'sidebar-footer';
+    var listen = AUDIOBOOK_URL
+      ? '<nav class="listen-bar" aria-label="Listen to the audiobook">' +
+          '<a class="listen-btn" href="' + AUDIOBOOK_URL + '" target="_blank" rel="noopener">' +
+            '<i class="bi bi-headphones"></i> Listen on ElevenReader</a>' +
+        '</nav>'
+      : '';
+    footer.innerHTML =
+      listen +
+      '<nav class="download-bar" aria-label="Download this handbook">' +
+        '<span class="download-bar__label">Download</span>' +
+        '<span class="download-pills">' +
+          '<a class="download-pill" href="index.pdf"  download>PDF</a>' +
+          '<a class="download-pill" href="index.epub" download>EPUB</a>' +
+        '</span>' +
+      '</nav>' +
+      '<nav class="sidebar-links" aria-label="Source and author">' +
+        '<a href="' + GITHUB_URL + '" target="_blank" rel="noopener">' +
+          '<i class="bi bi-github"></i> Source on GitHub</a>' +
+        '<a href="' + LINKEDIN_URL + '" target="_blank" rel="noopener">' +
+          '<i class="bi bi-linkedin"></i> Voytek Pitula</a>' +
+      '</nav>';
+    sidebar.appendChild(footer);
+  }
+
+  function scrollspy() {
+    const links = Array.from(document.querySelectorAll('#TOC .nav-link'));
+    if (!links.length) return;
+    const items = links.map(link => {
+      const target = (link.getAttribute('data-scroll-target') || link.getAttribute('href') || '').replace(/^#/, '');
+      const el = target ? document.getElementById(target) : null;
+      return el ? { link, el } : null;
+    }).filter(Boolean); // document order === TOC order
+    if (!items.length) return;
+
+    const OFFSET = 120;
+    let activeLink = null;
+    function update() {
+      let current = items[0];
+      for (const it of items) {
+        if (it.el.getBoundingClientRect().top - OFFSET <= 0) current = it;
+        else break;
+      }
+      if (current.link === activeLink) return;
+      if (activeLink) activeLink.classList.remove('active');
+      current.link.classList.add('active');
+      activeLink = current.link;
+    }
+    document.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  function init() { injectFooter(); scrollspy(); }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>

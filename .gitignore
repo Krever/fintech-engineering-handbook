@@ -1,2 +1,8 @@
 .idea/
 *.iml
+
+# Quarto build artifacts (everything is regenerated from index.qmd)
+/public/
+/.quarto/
+
+**/*.quarto_ipynb

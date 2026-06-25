@@ -1,0 +1,54 @@
+# Renders the handbook from index.qmd (HTML + PDF + EPUB) with Quarto and
+# deploys the site to GitHub Pages. Single source of truth: index.qmd.
+#
+# One-time setup: in the repo on GitHub, Settings → Pages → "Build and
+# deployment" → Source: "GitHub Actions".
+name: Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissions the deploy-pages action needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; newer pushes cancel in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: "1.9.38"
+
+      # Renders every format in _quarto.yml (html, typst->pdf, epub) into ./public.
+      # Typst is bundled with Quarto, so the PDF needs no LaTeX/TinyTeX.
+      - name: Render
+        run: quarto render
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

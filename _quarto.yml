@@ -1,0 +1,42 @@
+project:
+  type: default
+  output-dir: public
+  render:
+    - index.qmd
+
+# Single source of truth: index.qmd. Every output below is generated from it.
+format:
+  # Beautiful, scannable single page with a sticky left-hand table of contents.
+  html:
+    theme:
+      - cosmo
+      - theme.scss
+    toc: true
+    toc-location: left
+    toc-depth: 4
+    toc-expand: true
+    toc-title: "Contents"
+    smooth-scroll: true
+    anchor-sections: true
+    link-external-icon: true
+    link-external-newwindow: true
+    code-copy: true
+    # Our own download bar is the single source of truth for the other formats;
+    # disable Quarto's auto "Other Formats" list (it labels the PDF "Typst" and
+    # cannot show MOBI).
+    format-links: false
+    include-after-body:
+      - _includes/enhance.html
+    grid:
+      sidebar-width: 320px
+      body-width: 860px
+
+  # Ebook + print formats. Quality is intentionally not a priority here.
+  # Typst is bundled with Quarto, so PDF needs no LaTeX/TinyTeX install.
+  typst:
+    papersize: a4
+    toc: true
+    toc-title: "Contents"
+
+  epub:
+    toc: true

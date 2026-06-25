@@ -1,0 +1,292 @@
+/*-- scss:defaults --*/
+
+// ── Editorial-technical handbook ──────────────────────────────────────────
+// A book about money systems: warm paper, characterful serif reading type,
+// a precise technical sans for the UI, and a confident deep-teal accent.
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+// Palette
+$paper:        #fbf9f4;   // warm off-white background
+$ink:          #23262b;   // body text
+$ink-soft:     #555b64;   // muted text / captions
+$teal:         #0b7c72;   // accent
+$teal-deep:    #0a655d;   // accent hover
+$rule:         rgba(35, 38, 43, 0.10);
+
+$body-bg:        $paper;
+$body-color:     $ink;
+$primary:        $teal;
+$link-color:     $teal;
+$link-hover-color: $teal-deep;
+
+// Type system
+$font-family-sans-serif: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-family-monospace:  "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+$headings-font-family:   "Fraunces", Georgia, "Times New Roman", serif;
+
+$font-size-root:   18px;
+$line-height-base: 1.72;
+$h1-font-size:     3.0rem;
+$h2-font-size:     1.85rem;
+$h3-font-size:     1.28rem;
+$headings-font-weight: 600;
+
+/*-- scss:rules --*/
+
+// Long-form reading type: Newsreader serif for body copy.
+body {
+  font-family: "Newsreader", Georgia, serif;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+// Title block ───────────────────────────────────────────────────────────────
+.quarto-title .title {
+  font-family: $headings-font-family;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.quarto-title .subtitle {
+  font-family: "Newsreader", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.35rem;
+  color: $ink-soft;
+  margin-top: 0.4rem;
+}
+.quarto-title-meta {
+  font-family: $font-family-sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: $ink-soft;
+}
+
+// Headings ────────────────────────────────────────────────────────────────
+h1, h2, h3, h4 {
+  font-family: $headings-font-family;
+  letter-spacing: -0.015em;
+}
+// Section dividers: a single hairline above each H2. Quarto's default adds a
+// border *below* h2 as well — kill it so headings aren't boxed by two rules.
+section.level2 > h2 {
+  margin-top: 3rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid $rule;
+}
+h2 {
+  border-bottom: none !important;
+  padding-bottom: 0;
+}
+h3 {
+  margin-top: 2rem;
+  color: #2c3037;
+}
+h4 {
+  margin-top: 1.5rem;
+  font-size: 1.05rem;
+  color: #3a414b;
+}
+
+// Comfortable reading measure.
+.page-columns .content,
+main.content {
+  max-width: 820px;
+}
+
+// Body links: refined underline.
+.content a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgba(11, 124, 114, 0.35);
+}
+.content a:hover {
+  text-decoration-color: $teal-deep;
+}
+
+// Inline code: technical mono, subtle teal chip.
+code:not(.sourceCode) {
+  font-family: $font-family-monospace;
+  font-size: 0.86em;
+  background: rgba(11, 124, 114, 0.09);
+  color: $teal-deep;
+  padding: 0.1em 0.36em;
+  border-radius: 4px;
+}
+
+// Blockquotes.
+blockquote {
+  border-left: 3px solid $teal;
+  color: $ink-soft;
+  font-style: italic;
+}
+
+// ── Sidebar TOC ─────────────────────────────────────────────────────────────
+// Sans-serif, quiet, with a clearly visible active state (the original bug).
+#TOC, nav[role="doc-toc"] {
+  font-family: $font-family-sans-serif;
+  font-size: 0.85rem;
+}
+#TOC #toc-title {
+  font-family: $font-family-sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ink-soft;
+}
+#TOC .nav-link {
+  color: $ink-soft;
+  border-left: 2px solid transparent;
+  padding-left: 0.75rem;
+  margin-left: -2px;
+  line-height: 1.35;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+#TOC .nav-link:hover {
+  color: $ink;
+}
+// Keep the full TOC expanded. Quarto's collapse/expand of nested subsection
+// lists is driven by its built-in scrollspy (which we replaced), so without
+// this the H3 links stay hidden and the active highlight appears to vanish
+// whenever the current section is a subsection.
+#TOC ul.collapse {
+  display: block !important;
+}
+// Progressive indentation so the H2 › H3 › H4 hierarchy is legible at a glance.
+// The accent rail stays at a common left edge; only the text indents.
+#TOC ul ul .nav-link      { padding-left: 1.7rem; font-size: 0.95em; }
+#TOC ul ul ul .nav-link   { padding-left: 2.6rem; font-size: 0.92em; }
+
+// Active section — bold, teal, with a solid accent bar. Higher specificity +
+// !important to win over cosmo's defaults so scroll position is always clear.
+#TOC .nav-link.active,
+nav[role="doc-toc"] .nav-link.active {
+  color: $teal !important;
+  font-weight: 600;
+  border-left-color: $teal !important;
+}
+
+// Make the sidebar a flex column: the (long, depth-4) TOC scrolls on its own,
+// while the download section stays pinned at the bottom and always visible
+// instead of being buried below 40+ TOC entries.
+#quarto-sidebar-toc-left {
+  display: flex !important;
+  flex-direction: column;
+  overflow: hidden !important;
+}
+#quarto-sidebar-toc-left > nav#TOC {
+  flex: 1 1 auto;
+  min-height: 0;          // required so the flex child can shrink and scroll
+  overflow-y: auto;
+}
+#quarto-sidebar-toc-left > .sidebar-footer {
+  flex: 0 0 auto;
+}
+
+// ── Sidebar footer: Download + source/author links (pinned below the TOC) ────
+.sidebar-footer {
+  margin-top: 1.4rem;
+  padding-bottom: 1.75rem;
+  border-top: 1px solid $rule;
+  font-family: $font-family-sans-serif;
+}
+// Audiobook call-to-action: a prominent "listen" button (links out to
+// ElevenReader; no embedded player). Sits at the top of the footer when present.
+.listen-bar {
+  padding-top: 1.1rem;
+  margin-bottom: 1.1rem;
+}
+.listen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: $teal;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  text-decoration: none !important;
+  transition: background 0.14s ease;
+}
+.listen-btn:hover { background: $teal-deep; }
+.listen-btn .bi { font-size: 1.05rem; }
+
+// When the listen button is present it owns the top padding; the download
+// section then just needs separation from it.
+.listen-bar + .download-bar { padding-top: 0; }
+.download-bar {
+  padding-top: 1.1rem;
+}
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+.sidebar-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: $ink-soft;
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+.sidebar-links a:hover {
+  color: $teal;
+}
+.sidebar-links .bi {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+.download-bar__label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ink-soft;
+  margin-bottom: 0.6rem;
+}
+.download-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.download-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: $teal-deep;
+  text-decoration: none !important;
+  padding: 0.34rem 0.85rem;
+  border: 1px solid rgba(11, 124, 114, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.download-pill::before {
+  content: "↓";
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+.download-pill:hover {
+  background: $teal;
+  border-color: $teal;
+  color: #fff;
+}
+.download-pill:hover::before { opacity: 1; }
+
+// ── Callouts ────────────────────────────────────────────────────────────────
+.callout.callout-warning {
+  background: rgba(193, 124, 17, 0.06);
+  border-left-color: #c17c11;
+}
