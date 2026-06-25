@@ -156,7 +156,8 @@ always balance - money is only moved, never created or destroyed.
   (`assets = liabilities + equity + revenue - expenses`).
 - **One transaction, many movements.** A single transaction will usually create multiple movements, e.g. one for the
   net amount, another for the fees.
-- **Posted entries are immutable.** By convention, corrections are made by adding new compensating entries that offset the original.
+- **Posted entries are immutable.** By convention, corrections are made by adding new compensating entries that offset
+  the original.
 
 **Principles touched:**
 
@@ -215,6 +216,12 @@ A useful audit trail captures, for every change:
 
 Money movements are the obvious subject, but manual interventions, configuration changes (fee schedules, rate sources,
 limits) and permission changes need trails too.
+
+The **why** is often itself the output of a decision (e.g. a compliance check or risk score). Recording just the outcome
+("blocked") rarely satisfies an audit because you'll be asked how that outcome was reached. If that logic lives in a
+decision
+table or a rules engine (DMN, Drools, Decisions4s) instead of being buried in imperative code, the decision becomes a
+structured, replayable artifact that says which rules fired, on which inputs, with what result.
 
 **Principles touched:**
 
@@ -629,6 +636,74 @@ how to approach the problem.
 - **No lost data.** It's the safety net that catches the dropped fact - the missing webhook, the unsettled transfer -
   before it disappears for good.
 
+## Controls and access
+
+The patterns so far keep the *data* correct. But a money system also has to constrain who is allowed to act on it, and
+prove after the fact that the process was followed. This is where the **No trust** principle turns inward and your own
+operators and engineers are a trust boundary too, just like external providers and internal components. An auditor
+examines
+these controls alongside the books themselves.
+
+### Segregation of duties and four-eyes
+
+Some actions are too sensitive to leave to a single person, regardless of how trusted they are. Splitting them is the
+oldest control in
+finance, and it takes two related forms: **segregation of duties** (no one person owns a whole process) and *
+*four-eyes / maker-checker** (a specific action needs a second person
+to approve it before it takes effect, also called dual control).
+
+1. **It applies to money operations.** Large or manual withdrawals, manual ledger corrections, treasury and cold-wallet
+   moves, changing a fee schedule or a limit - anything that can move or misstate funds is a candidate for a second
+   approver.
+2. **It applies to engineering too.** Merging code, deploying to production and changing infrastructure are sensitive
+   actions in a money system. Hence we usually require review and approval.
+3. **The approval is part of the trail.** Record who requested, who approved, and that the two were
+   different people - otherwise the control is unprovable (see [Audits and audit trails](#audits-and-audit-trails)).
+4. **Break-glass needs a path.** Emergencies happen, and a rigid control invites people to route around it. Provide an
+   explicit, heavily-audited override rather than forcing a backdoor.
+
+**Principles touched:**
+
+- **No trust.** A single internal actor - even a trusted one - is not sufficient authority for a sensitive or
+  irreversible action.
+
+### Access control
+
+Who can do what is itself part of the system's state, and it changes over time as people join, move teams and leave.
+It's not enough to know who can touch funds today; Auditors will also ask how they came to have that access.
+
+1. **Least privilege.** Grant each actor - human or service - the minimum needed, and prefer roles (RBAC) over
+   per-person grants so that access stays reviewable.
+2. **Authorization changes need a trail.** Granting or revoking a capability is a sensitive event, exactly
+   like a money movement: record what changed, who changed it and why. The audit-trail discipline from the ledger
+   applies here too (see [Audits and audit trails](#audits-and-audit-trails)).
+3. **Review access periodically.** Permissions become stale or inaccurate. Scheduled access
+   reviews (recertification) are the post-factum check (see [Invariants](#invariants)) applied to access so that we can
+   catch the drift.
+
+**Principles touched:**
+
+- **No trust.** Standing access quietly accumulates; least privilege and periodic review are what keep it in check.
+
+### The change trail (SDLC)
+
+In a regulated environment we usually have to audit how code reaches production and so know who reviewed a change, who
+approved it, when it shipped, and so on. Your version control and CI/CD systems are a great help here if done right.
+
+1. **Source control is the record.** Commit history attributes every change to an author and ties it - through review
+   and linked tickets - to the reason it was made (it's the usual *what / who / why* an audit trail demands). Protect it
+   accordingly via signed commits, protected branches, no force-pushing shared history.
+2. **Reviews and pipelines must be enforced.** Required (non-optional) reviews, status checks and "no direct pushes to
+   main" are crucial because discipline doesn't fly in audits.
+3. **Deployments are traceable.** Which version is running, who released it and when, should be reconstructable - this
+   is what lets an incident be tied back to the change that caused it.
+
+**Principles touched:**
+
+- **No lost data.** The history of how the system itself came to be is as much a part of the trail as the history of the
+  money it holds.
+- **No trust.** The system enforces the delivery controls - it doesn't rely on people remembering to follow them.
+
 ## Testing
 
 Tests matter everywhere, but in a money system they matter more. The difficulty is that you usually can't enumerate the
@@ -677,7 +752,8 @@ which you can choose the techniques with the most impact on your system.
 
 ## Appendix A: Know your domain
 
-The hardest part of joining fintech is often not the code but the vocabulary and concepts behind it. The field is full of
+The hardest part of joining fintech is often not the code but the vocabulary and concepts behind it. The field is full
+of
 words that sound ordinary but mean something precise, and acronyms that everyone around you uses without ever expanding.
 
 Caveats: terms a layperson already knows (deposit, withdrawal, transfer, currency) are skipped, and so
@@ -821,7 +897,14 @@ already covers a concept properly, the entry links to that section instead of re
 - **VASP** - Virtual Asset Service Provider; the regulatory label for a crypto business such as an exchange or
   custodian.
 - **MiCA** - the EU's Markets in Crypto-Assets regulation.
-- **Segregation of duties** - splitting a sensitive action across people so no single person can complete it alone.
+- **Segregation of duties** - splitting a sensitive action across people so no single person can complete it alone (see
+  [Segregation of duties and four-eyes](#segregation-of-duties-and-four-eyes)).
+- **Four-eyes / maker-checker / dual control** - requiring a second person to approve a sensitive action before it takes
+  effect (see [Segregation of duties and four-eyes](#segregation-of-duties-and-four-eyes)).
+- **Least privilege / RBAC** - granting each actor the minimum access needed / managing it through roles rather than
+  per-person grants (see [Access control](#access-control)).
+- **Change management** - the controlled, traceable process (review, approval, deployment) by which code and config
+  reach production (see [The change trail (SDLC)](#the-change-trail-sdlc)).
 - **Audit / audit trail** - external scrutiny that the books and controls reflect reality / the recorded history that
   lets any balance or decision be reproduced (see [Audits and audit trails](#audits-and-audit-trails)).
 
@@ -837,8 +920,8 @@ and who it's pitched at, so you can pick by what you're missing.
   (essay, free online) - maps double-entry bookkeeping onto a graph/data model, written for engineers rather than
   accountants.
 - [*The Accounting Game: Basic Accounting Fresh from the Lemonade
-  Stand*](https://www.goodreads.com/book/show/420846.Accounting_Game)
-  - accounting from first principles via a running lemonade-stand example; assumes no finance background.
+  Stand*](https://www.goodreads.com/book/show/420846.Accounting_Game) - accounting from first principles via a
+  running lemonade-stand example; assumes no finance background.
 - [Modern Treasury, *How to Scale a Ledger*](https://www.moderntreasury.com/journal/how-to-scale-a-ledger-part-i)
   (article series, free online) - building a production ledger from a software-engineering angle.
 
@@ -853,8 +936,8 @@ and who it's pitched at, so you can pick by what you're missing.
 **Markets & trading**
 
 - [*Trading and Exchanges: Market Microstructure for
-  Practitioners*](https://www.goodreads.com/book/show/1290158.Trading_and_Exchanges)
-  - where order books, makers/takers and spreads come from; a long, detailed practitioner reference.
+  Practitioners*](https://www.goodreads.com/book/show/1290158.Trading_and_Exchanges) - where order books,
+  makers/takers and spreads come from; a long, detailed practitioner reference.
 
 **Crypto**
 
@@ -865,8 +948,8 @@ and who it's pitched at, so you can pick by what you're missing.
 **The engineering half**
 
 - [*Designing Data-Intensive
-  Applications*](https://www.goodreads.com/book/show/23463279-designing-data-intensive-applications)
-  - idempotency, logs, consistency and the failure modes this handbook keeps returning to, from the systems side.
+  Applications*](https://www.goodreads.com/book/show/23463279-designing-data-intensive-applications) - idempotency,
+  logs, consistency and the failure modes this handbook keeps returning to, from the systems side.
 
 **KYC & AML**
 
