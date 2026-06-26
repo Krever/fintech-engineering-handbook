@@ -22,13 +22,12 @@ It's meant as a living document and contributions are welcomed.
 
 Everything you will read below is a way to adhere to the three principles:
 
-1. **No invented data.** Money can't be created out of nowhere, hence we can't tolerate duplicates or arbitrary balance
-   updates.
-2. **No lost data.** Everything that happens to money has to be tracked and persisted: no precision losses,
-   at-least-once
-   deliveries, event-sourcing, audit trails, immutability.
-3. **No trust.** Neither towards external providers, internal components nor the world. Failing on broken assumptions,
-   verifying webhooks, verifying data across different sources.
+1. **No invented data.** Money can't be created out of nowhere, so we can't tolerate duplicates or arbitrary balance
+   updates. We enforce this with idempotency, deduplication and reconciliation.
+2. **No lost data.** Everything that happens to money has to be tracked and persisted. We protect this with full
+   precision, at-least-once deliveries, event sourcing, audit trails and immutability.
+3. **No trust.** Trust neither external providers, internal components, nor the world. We uphold this by verifying
+   webhooks, cross-checking data across sources and failing loudly on broken assumptions.
 
 ## Representing money
 
