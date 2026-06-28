@@ -16,7 +16,7 @@ or in parts when dealing with a particular problem.
   to point colleagues at.
 - **People outside fintech.** To understand how building for money differs from what they're used to, and why.
 
-It's meant as a living document and contributions are welcomed.
+To learn more about the background of this book, see [Appendix C](#about).
 
 ## Principles
 
@@ -1100,4 +1100,41 @@ is
 money the user *loses* to you (revenue); the cashback is money you *give* the user (an expense). Both are real, both go
 through the books, and both round - so the one transaction has to satisfy *no invented data* (the books still balance,
 nothing minted) and *no lost data* (every residual tracked) at the same time.
+
+## Appendix C: About this handbook {#about}
+
+### Who wrote it
+
+My name is Voytek and I'm the author of this handbook. The content is based on my experience in the industry, which
+has been primarily around payments, accounting, controlling and treasury management for both fiat and crypto. I also
+had some second-hand exposure to trading and investment products.
+
+### How it was written
+
+Most of the content was written by my own hand, but I did leverage AI for many things, such as polishing,
+structuring, research and review.
+
+This book is meant as a living document, and I plan to update it regularly when I find something add-worthy. Feedback is very much welcomed
+and can be shared anywhere, but [GitHub Issues](https://github.com/Krever/fintech-engineering-handbook/issues) is
+probably the best place for it.
+
+### What to expect
+
+Most of the book should be prefixed with "it depends", as should basically any non-trivial topic. But such a disclaimer serves no purpose.
+Instead, I try to give safe default advice and enough context for the reader to decide whether a given piece of advice applies to their situation.
+
+The content of the book covers the topics I know something about, which leaves large gaps, e.g. around hardcore trading, pricing,
+capital markets, and more. Yet the title is generic and aspirational - I would love to cover as much of the fintech space as possible.
+If you think something important and widely useful is missing, please let me know.
+
+A lot of the material (idempotency, ordering, retries, reconciliation) is general distributed-systems practice, but it's
+included here because these topics are critical when stakes are high, and a must-know for any fintech engineer.
+
+The book was written with a thinking reader in mind, and I assume no one will follow it blindly. It should go without saying
+that your internal guidelines and practices take precedence over the advice I share (though the latter could prompt you to question the former).
+And nothing here is legal, compliance or financial advice. Of course.
+
+### Need more help?
+
+If you need direct help or advice with something specific to your fintech system, I do a bit of [consulting](https://w.pitula.me/#consulting) and will be glad to help!
 
