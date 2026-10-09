@@ -244,7 +244,16 @@ nav[role="doc-toc"] .nav-link.active {
 .fx-row > .fx-btn { flex: 1 1 0; min-width: max-content; }
 .fx-row > .gh-badge { flex: 0 0 auto; }
 
+// The hairline box shared by the buttons and the audiobook player, which
+// takes a button's place and must look like one.
+%fx-box {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(11, 124, 114, 0.28);
+  border-radius: 8px;
+}
+
 .fx-btn {
+  @extend %fx-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -255,9 +264,6 @@ nav[role="doc-toc"] .nav-link.active {
   font-weight: 500;
   letter-spacing: 0.01em;
   color: $teal-deep;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(11, 124, 114, 0.28);
-  border-radius: 8px;
   text-decoration: none !important;
   white-space: nowrap;   // labels are short by design; never wrap one
   -webkit-tap-highlight-color: transparent;
@@ -266,7 +272,6 @@ nav[role="doc-toc"] .nav-link.active {
 .fx-btn .bi { font-size: 1em; opacity: 0.7; }
 .fx-btn:hover { background: $teal; border-color: $teal; color: #fff; }
 .fx-btn:hover .bi { opacity: 1; }
-.fx-btn--wide { display: flex; width: 100%; }
 // The one paid ask in the panel: same button, carrying a little more weight.
 .fx-btn--accent {
   background: rgba(11, 124, 114, 0.09);
@@ -276,18 +281,36 @@ nav[role="doc-toc"] .nav-link.active {
 .fx-btn--accent:hover { background: $teal; }
 
 // Audiobook buttons: icon only, with a price chip beside it ("Free" or the
-// store price), so the reader sees the cost before the click. The icons are a little
-// larger than on labelled buttons, because they carry the meaning alone.
-// Three of them must share one line even on a 360px phone, so they may shrink
-// below their content width, unlike the labelled buttons.
-.fx-listen { gap: 0.4rem; padding-left: 0.4rem; padding-right: 0.4rem; }
-.fx-row > .fx-listen { flex: 1 1 auto; min-width: 0; }
-.fx-listen .bi { font-size: 1.15em; opacity: 0.85; }
+// store price), so the reader sees the cost before the click. The icons are a
+// little larger than on labelled buttons, because they carry the meaning alone.
+.fx-listen { gap: 0.35rem; padding-inline: 0.35rem; }
+// The row is a grid, one column per button, however many URLs are set: each
+// column is at least as wide as its content, and the spare width is shared
+// equally, so the buttons are of equal width when they fit.
+.fx-row--listen {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(max-content, 1fr);
+}
+// Where they do not fit on one line, the grid goes to two columns, and a
+// last button alone on its row spans both. Measured needs: four buttons
+// about 330px (more than the sidebar and the phone card), three about 255px.
+.fx-group--listen { container-type: inline-size; }
+// A mixin, not a placeholder: @extend cannot reach into a @container block.
+@mixin fx-two-columns { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+@container (max-width: 340px) {
+  .fx-row--listen:has(> :nth-child(4)) { @include fx-two-columns; }
+}
+@container (max-width: 258px) {
+  .fx-row--listen:has(> :nth-child(3)) { @include fx-two-columns; }
+  .fx-row--listen:has(> :nth-child(3)) > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+.fx-listen .bi { font-size: 1.15em; line-height: 1; opacity: 0.85; }
 .fx-listen .fx-mark { width: 14px; height: 14px; opacity: 0.85; }
 .fx-listen .fx-mark--wide { width: 20px; height: 14px; }
 .fx-listen:hover .fx-mark { opacity: 1; }
 .fx-price {
-  padding: 0.12rem 0.5rem;
+  padding: 0.12rem 0.42rem;
   font-size: 0.72rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -297,6 +320,65 @@ nav[role="doc-toc"] .nav-link.active {
   transition: background 0.14s ease, color 0.14s ease;
 }
 .fx-btn:hover .fx-price { color: #fff; background: rgba(255, 255, 255, 0.2); }
+
+// Audiobook player: shown above the Listen buttons, in place of the play
+// button, once that is pressed (see morph in enhance.html). One hairline box
+// of the same height as the buttons (set by morph from the button it
+// replaces): Plyr's controls, then a close button.
+.fx-player {
+  @extend %fx-box;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+}
+.fx-player[hidden] { display: none; }
+.fx-player__body { flex: 1 1 auto; min-width: 0; }
+.fx-player__close {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 0.65rem;
+  font-size: 0.8rem;
+  color: $teal-deep;
+  background: transparent;
+  border: 0;
+  border-radius: 0 7px 7px 0;
+  box-shadow: inset 1px 0 0 rgba(11, 124, 114, 0.22);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.fx-player__close:hover { background: $teal; color: #fff; }
+
+// Plyr in the panel's palette. The box is .fx-player's, so Plyr has none.
+.reader-panel .plyr {
+  --plyr-color-main: #{$teal};
+  --plyr-audio-controls-background: transparent;
+  --plyr-audio-control-color: #{$teal-deep};
+  --plyr-audio-control-color-hover: #fff;
+  --plyr-audio-control-background-hover: #{$teal};
+  --plyr-control-spacing: 6px;
+  --plyr-font-family: #{$font-family-sans-serif};
+  --plyr-font-size-time: 0.75rem;
+  --plyr-menu-color: #{$ink};
+  --plyr-range-thumb-height: 11px;
+}
+.reader-panel .plyr__controls { padding: 3px 6px; }
+// Without Plyr (CDN blocked), the native player fills the box.
+.reader-panel audio.fx-audio { display: block; width: 100%; }
+
+// The button-to-player transition: a little slower than the default, so the
+// growth reads as one motion.
+// (The page has no other view transitions.)
+::view-transition-group(*) { animation-duration: 0.3s; }
+
+.fx-play { font-family: inherit; cursor: pointer; }
+// While Plyr loads (the sound has already started), the icon breathes.
+.fx-play.is-loading .bi { animation: fx-breathe 0.9s ease-in-out infinite alternate; }
+@keyframes fx-breathe { from { opacity: 0.35; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-play.is-loading .bi { animation: none; }
+}
 
 // GitHub badge: the platform's own split shape — identity on the left, count on
 // the right, one hairline between them — drawn in our palette instead of theirs.

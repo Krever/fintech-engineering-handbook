@@ -13,9 +13,12 @@ project:
     - dl/pdf.html
     - dl/epub.html
     - dl/mp3.html
-    # Same for the paid audiobook editions — one page per store.
+    # Same for the audiobook: one page per store, plus the in-page player.
     - go/listen-spotify.html
     - go/listen-elevenreader.html
+    - go/listen-online.html
+    # Lock-screen artwork for the in-page audiobook player.
+    - assets/cover-square-512.jpg
     # Same trick for "buy me a coffee" clicks — one page per placement, since
     # the path is all Cloudflare records.
     - go/kofi-sidebar.html

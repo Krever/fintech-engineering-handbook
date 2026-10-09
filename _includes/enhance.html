@@ -1,9 +1,10 @@
 <script>
 // Everything this single-document, left-TOC layout needs that Quarto can't
 // express declaratively:
-//   1. The reader panel — downloads, the tip jar, the GitHub badge and the
-//      author line — pinned below the TOC, and repeated as a card under the
-//      title on mobile, where the TOC is hidden.
+//   1. The reader panel — downloads, the audiobook (with an in-page player),
+//      the tip jar, the GitHub badge and the author line — pinned below the
+//      TOC, and repeated as a card under the title on mobile, where the TOC
+//      is hidden.
 //   2. A scrollspy that highlights the current section as you scroll/click
 //      (Quarto's built-in highlight does not track scroll for a left TOC).
 //   3. The live GitHub star count in that panel.
@@ -15,13 +16,13 @@
   var LINKEDIN_URL = 'https://www.linkedin.com/in/krever/';
   var X_URL = 'https://x.com/Krever01';
   var HOME_URL = 'https://w.pitula.me';
-  // Audiobook. Each URL is optional: empty = that row is hidden, all empty =
-  // the whole "Listen" group is hidden. The MP3 is free; the store editions
-  // cost AUDIOBOOK_PRICE, which is shown on their rows.
+  // Audiobook. Each URL is optional: empty = its button is hidden, all empty =
+  // the whole "Listen" group is hidden. The MP3 (played here or downloaded) is
+  // free; the store editions cost AUDIOBOOK_PRICE, which is shown on them.
   var AUDIOBOOK_PRICE = '$5';
   var AUDIOBOOK_MP3_URL = 'https://github.com/Krever/fintech-engineering-handbook/releases/download/audiobook-v1/ElevenLabs_fintech-eng_v2.mp3';
   var AUDIOBOOK_SPOTIFY_URL = '';
-  var AUDIOBOOK_ELEVENREADER_URL = '';
+  var AUDIOBOOK_ELEVENREADER_URL = 'xxxx';
   // Tip jar. Empty = every support CTA below stays hidden.
   var KOFI_URL = 'https://ko-fi.com/krever';
 
@@ -67,7 +68,7 @@
   var X_MARK = mark('0 0 24 24', 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932zm-1.291 19.491h2.039L6.486 3.24H4.298l13.312 17.404z');
 
   // ── The reader panel ──────────────────────────────────────────────────────
-  // Two groups and a byline. Everything is the same button in two weights:
+  // Three groups and a byline. Everything is the same button in two weights:
   // outline for "get the book", a soft teal fill for the ask. The GitHub link
   // is the one exception, and only because a star count wants the split-badge
   // shape the platform itself established.
@@ -83,33 +84,47 @@
       '</div>';
   }
 
-  // One icon button per audiobook edition, all on one line, each with its
-  // price beside the icon: "Free" for the MP3, the store price for the paid
-  // editions. The reader sees the cost before they click; the name is in the
-  // tooltip and the aria-label.
+  // One icon button per way to listen, laid out on a grid (see theme.scss),
+  // each with its price beside the icon: "Free" for playing here and for the
+  // MP3 download, the store price for the paid editions. The reader sees the
+  // cost before they click; the name is in the tooltip and the aria-label.
+  //
+  // Playing here is two steps: see the audiobook player section below.
   function listenGroup() {
+    var mp3 = AUDIOBOOK_MP3_URL;
     var buttons =
-      listenButton(AUDIOBOOK_MP3_URL, '<i class="bi bi-download"></i>', 'Download MP3', 'Free', 'dl/mp3.html', true) +
-      listenButton(AUDIOBOOK_SPOTIFY_URL, '<i class="bi bi-spotify"></i>', 'Spotify', AUDIOBOOK_PRICE, 'go/listen-spotify.html', false) +
-      listenButton(AUDIOBOOK_ELEVENREADER_URL, ELEVEN_MARK, 'ElevenReader', AUDIOBOOK_PRICE, 'go/listen-elevenreader.html', false);
+      (mp3 ? listenButton('button type="button" class="fx-btn fx-listen fx-play"', '<i class="bi bi-play-fill"></i>', 'Play here', 'Free') : '') +
+      (mp3 ? listenLink(mp3, ' download', '<i class="bi bi-download"></i>', 'Download MP3', 'Free', 'dl/mp3.html') : '') +
+      listenLink(AUDIOBOOK_SPOTIFY_URL, ' target="_blank" rel="noopener"', '<i class="bi bi-spotify"></i>', 'Spotify', AUDIOBOOK_PRICE, 'go/listen-spotify.html') +
+      listenLink(AUDIOBOOK_ELEVENREADER_URL, ' target="_blank" rel="noopener"', ELEVEN_MARK, 'ElevenReader', AUDIOBOOK_PRICE, 'go/listen-elevenreader.html');
     if (!buttons) return '';
     return '' +
-      '<div class="fx-group">' +
+      '<div class="fx-group fx-group--listen">' +
         '<span class="fx-group__label">Listen</span>' +
-        '<div class="fx-row">' + buttons + '</div>' +
+        '<div class="fx-player" hidden>' +
+          '<div class="fx-player__body"></div>' +
+          '<button type="button" class="fx-player__close" title="Close player" aria-label="Close player">' +
+            '<i class="bi bi-x-lg"></i>' +
+          '</button>' +
+        '</div>' +
+        '<div class="fx-row fx-row--listen">' + buttons + '</div>' +
       '</div>';
   }
 
-  function listenButton(url, icon, name, price, beacon, free) {
-    if (!url) return '';
-    var open = free ? ' download' : ' target="_blank" rel="noopener"';
-    var label = name + ' (' + (free ? 'free' : price) + ')';
+  // `open` is the start tag's content, e.g. 'a href="…"'; the tag name ends
+  // at the first space.
+  function listenButton(open, icon, name, price) {
+    var tag = open.split(' ')[0];
+    var label = name + ' (' + price + ')';
     return '' +
-      '<a class="fx-btn fx-listen" href="' + url + '"' + open + ' data-ping="' + beacon + '"' +
-        ' title="' + label + '" aria-label="' + label + '">' +
-        icon +
-        '<span class="fx-price" aria-hidden="true">' + price + '</span>' +
-      '</a>';
+      '<' + open + ' title="' + label + '" aria-label="' + label + '">' +
+        icon + '<span class="fx-price" aria-hidden="true">' + price + '</span>' +
+      '</' + tag + '>';
+  }
+
+  function listenLink(url, attrs, icon, name, price, beacon) {
+    if (!url) return '';
+    return listenButton('a class="fx-btn fx-listen" href="' + url + '"' + attrs + ' data-ping="' + beacon + '"', icon, name, price);
   }
 
   // Starring and tipping are the same ask at two prices, so they share a line:
@@ -199,6 +214,214 @@
         '<i class="bi bi-cup-hot-fill"></i>Buy me a coffee' +
       '</a>';
     body.appendChild(card);
+  }
+
+  // ── Audiobook player ──────────────────────────────────────────────────────
+  // Opened on intent only. The play button starts the audio and loads Plyr
+  // from the CDN; then the button is replaced by the player, full width above
+  // the other buttons. The player's close button pauses and brings the play
+  // button back. Readers who never press play download neither Plyr nor
+  // any audio. If Plyr does not load in time, the browser's own player is used.
+  //
+  // The reader's position is kept in localStorage, so pressing play on a
+  // later visit resumes where the last one stopped. It is a convenience only:
+  // with storage off, playback starts from the beginning.
+  var PLYR_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/plyr/3.7.8/';
+  var PLYR_JS_SRI = 'sha384-1r2GCX3Eml88xgbJb7kOe51vEASmv6hbqDRcK55GxMiwWy/5xX1xFlC6z7saa8Ct';
+  var PLYR_CSS_SRI = 'sha384-FDFJN4eDoTbFzL8KHLAOmtAicPaFc44D0JrdAwgO91ZDgGmAHrcpMWLCwTxBSVI7';
+  var POSITION_KEY = 'feh:audiobook-position';
+  var plyrLoading = null;
+  var started = false;   // first play on this page sends the beacon
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  function savedPosition() {
+    try { return parseFloat(localStorage.getItem(POSITION_KEY)) || 0; } catch (e) { return 0; }
+  }
+
+  function savePosition(seconds) {
+    try {
+      if (seconds > 0) localStorage.setItem(POSITION_KEY, String(Math.floor(seconds)));
+      else localStorage.removeItem(POSITION_KEY);
+    } catch (e) { /* not worth caring about */ }
+  }
+
+  // Resolves when Plyr and its icon sprite are ready, or when either failed;
+  // the caller checks window.Plyr. The sprite is fetched here rather than by
+  // Plyr, so the player never shows up with its icons missing.
+  function loadPlyr() {
+    if (plyrLoading) return plyrLoading;
+    var script = new Promise(function (resolve) {
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = PLYR_BASE + 'plyr.css';
+      css.integrity = PLYR_CSS_SRI;
+      css.crossOrigin = 'anonymous';
+      document.head.appendChild(css);
+      var js = document.createElement('script');
+      js.src = PLYR_BASE + 'plyr.min.js';
+      js.integrity = PLYR_JS_SRI;
+      js.crossOrigin = 'anonymous';
+      js.onload = js.onerror = function () { resolve(); };
+      document.head.appendChild(js);
+    });
+    var sprite = fetch(PLYR_BASE + 'plyr.svg')
+      .then(function (r) { return r.ok ? r.text() : ''; })
+      .then(function (svg) {
+        var holder = document.createElement('div');
+        holder.id = 'sprite-plyr';
+        holder.hidden = true;
+        holder.innerHTML = svg;
+        document.body.insertBefore(holder, document.body.firstChild);
+      })
+      .catch(function () { /* icons missing; controls still work */ });
+    plyrLoading = Promise.all([script, sprite]);
+    return plyrLoading;
+  }
+
+  function initPlayers() {
+    document.addEventListener('click', function (e) {
+      var play = e.target.closest('.fx-play');
+      var close = e.target.closest('.fx-player__close');
+      if (!play && !close) return;
+      var panel = (play || close).closest('.reader-panel');
+      // morph() takes the play button out of the page, so keep it at hand.
+      if (play) panel.fxPlay = play;
+      var audio = panel.querySelector('audio.fx-audio');
+      if (close) {
+        if (audio) audio.pause();
+        morph(panel, false);
+      } else if (!audio) {
+        openPlayer(panel);
+      } else {
+        audio.play();
+        morph(panel, true);
+      }
+    });
+  }
+
+  // Title, author and cover on the lock screen and in the OS media controls,
+  // instead of the page URL.
+  var MEDIA_METADATA = {
+    title: 'Fintech Engineering Handbook',
+    artist: 'Voytek Pitula',
+    album: 'Fintech Engineering Handbook (audiobook)',
+    artwork: [{ src: 'assets/cover-square-512.jpg', sizes: '512x512', type: 'image/jpeg' }]
+  };
+
+  // How long the reader waits on a slow CDN before the native player opens.
+  var PLYR_TIMEOUT_MS = 4000;
+
+  function openPlayer(panel) {
+    var play = panel.fxPlay;
+    if (play.classList.contains('is-loading')) return;
+
+    var audio = document.createElement('audio');
+    audio.className = 'fx-audio';
+    audio.src = AUDIOBOOK_MP3_URL;
+    audio.preload = 'none';   // play() below starts the fetch
+    audio.setAttribute('aria-label', 'Audiobook player');
+    wireAudio(audio);
+    panel.querySelector('.fx-player__body').appendChild(audio);
+    play.classList.add('is-loading');
+
+    // play() must run inside the click handler: mobile browsers allow it only
+    // as a direct answer to the gesture. The sound starts while the button is
+    // still a button; Plyr adopts the playing element when it arrives.
+    audio.play().catch(function () { /* blocked: reader presses play */ });
+
+    var opened = false;
+    function reveal() {
+      if (opened) return;
+      opened = true;
+      if (window.Plyr) {
+        new Plyr(audio, {
+          iconUrl: PLYR_BASE + 'plyr.svg',
+          loadSprite: false,   // loadPlyr already put the sprite in the page
+          controls: ['play', 'progress', 'current-time', 'settings'],
+          settings: ['speed'],
+          speed: { selected: 1, options: [0.75, 1, 1.25, 1.5, 1.75, 2] },
+          invertTime: false,
+          seekTime: 15,
+          tooltips: { controls: false, seek: true },
+          mediaMetadata: MEDIA_METADATA   // Plyr sets it on each play
+        });
+      } else {
+        audio.controls = true;
+        if ('mediaSession' in navigator && window.MediaMetadata) {
+          navigator.mediaSession.metadata = new MediaMetadata(MEDIA_METADATA);
+        }
+      }
+      play.classList.remove('is-loading');
+      morph(panel, true);
+    }
+    // A returning reader: seek to the saved position once the duration is
+    // known (the metadata comes after the press on play), and open the player
+    // only after the seek, so it never shows 00:00 first and then jumps.
+    var at = savedPosition();
+    var positioned = new Promise(function (resolve) {
+      audio.addEventListener('error', resolve, { once: true });
+      audio.addEventListener('loadedmetadata', function () {
+        if (!(at > 5 && at < audio.duration - 5)) { resolve(); return; }
+        audio.addEventListener('seeked', resolve, { once: true });
+        audio.currentTime = at;
+      }, { once: true });
+    });
+    Promise.all([loadPlyr(), at > 0 ? positioned : null]).then(reveal);
+    setTimeout(reveal, PLYR_TIMEOUT_MS);
+  }
+
+  // Opening takes the play button out of the row and shows the player, full
+  // width, above it; closing does the reverse. The other buttons stay, and the
+  // grid simply closes the gap (the button is removed, not hidden, so the
+  // grid's button count is right). With the View Transitions API the play
+  // button and the player share one transition name, so the browser grows the
+  // one into the other, and the other buttons slide to their new places. The
+  // names are set only for the swap, and only in this panel copy, since a name
+  // must be unique on the page. Without the API, or with reduced motion, the
+  // swap is instant.
+  function morph(panel, open) {
+    var row = panel.querySelector('.fx-row--listen');
+    var player = panel.querySelector('.fx-player');
+    var play = panel.fxPlay;
+    if (player.hidden !== open) return;
+    // The player is as tall as the buttons.
+    if (open) player.style.height = play.getBoundingClientRect().height + 'px';
+    function swap() {
+      player.hidden = !open;
+      if (open) {
+        play.remove();
+      } else {
+        row.insertBefore(play, row.firstChild);
+        play.focus();   // keyboard focus goes back where the reader was
+      }
+    }
+    if (!document.startViewTransition || reducedMotion.matches) { swap(); return; }
+    var others = Array.prototype.filter.call(row.children, function (el) { return el !== play; });
+    function name(on) {
+      play.style.viewTransitionName = on ? 'fx-player' : '';
+      player.style.viewTransitionName = on ? 'fx-player' : '';
+      others.forEach(function (el, i) { el.style.viewTransitionName = on ? 'fx-listen-' + i : ''; });
+    }
+    name(true);
+    document.startViewTransition(swap).finished.finally(function () { name(false); });
+  }
+
+  function wireAudio(audio) {
+    var lastSave = 0;
+    audio.addEventListener('play', function () {
+      // Each panel copy may hold a player; only one plays at a time.
+      document.querySelectorAll('audio.fx-audio').forEach(function (other) {
+        if (other !== audio) other.pause();
+      });
+      if (!started) { started = true; ping('go/listen-online.html'); }
+    });
+    audio.addEventListener('timeupdate', function () {
+      if (Date.now() - lastSave < 5000) return;
+      lastSave = Date.now();
+      savePosition(audio.currentTime);
+    });
+    audio.addEventListener('pause', function () { savePosition(audio.currentTime); });
+    audio.addEventListener('ended', function () { savePosition(0); });
   }
 
   // ── Star count ────────────────────────────────────────────────────────────
@@ -320,7 +543,7 @@
     }, { passive: true });
   }
 
-  // Audiobook rows name their own beacon page, one per edition.
+  // Audiobook buttons name their own beacon page, one per edition.
   function trackListenClicks() {
     document.addEventListener('click', function (e) {
       var a = e.target.closest('a[data-ping]');
@@ -370,7 +593,7 @@
   }
 
   function init() {
-    injectPanel(); injectSupportCard(); scrollspy();
+    injectPanel(); initPlayers(); injectSupportCard(); scrollspy();
     trackDownloads(); trackSupportClicks(); trackListenClicks(); trackReading(); loadStars();
   }
 
