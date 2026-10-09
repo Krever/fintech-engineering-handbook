@@ -275,6 +275,29 @@ nav[role="doc-toc"] .nav-link.active {
 }
 .fx-btn--accent:hover { background: $teal; }
 
+// Audiobook buttons: icon only, with a price chip beside it ("Free" or the
+// store price), so the reader sees the cost before the click. The icons are a little
+// larger than on labelled buttons, because they carry the meaning alone.
+// Three of them must share one line even on a 360px phone, so they may shrink
+// below their content width, unlike the labelled buttons.
+.fx-listen { gap: 0.4rem; padding-left: 0.4rem; padding-right: 0.4rem; }
+.fx-row > .fx-listen { flex: 1 1 auto; min-width: 0; }
+.fx-listen .bi { font-size: 1.15em; opacity: 0.85; }
+.fx-listen .fx-mark { width: 14px; height: 14px; opacity: 0.85; }
+.fx-listen .fx-mark--wide { width: 20px; height: 14px; }
+.fx-listen:hover .fx-mark { opacity: 1; }
+.fx-price {
+  padding: 0.12rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: $ink-soft;
+  background: rgba(35, 38, 43, 0.06);
+  border-radius: 999px;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.fx-btn:hover .fx-price { color: #fff; background: rgba(255, 255, 255, 0.2); }
+
 // GitHub badge: the platform's own split shape — identity on the left, count on
 // the right, one hairline between them — drawn in our palette instead of theirs.
 .gh-badge {

@@ -12,6 +12,10 @@ project:
     # _includes/enhance.html.
     - dl/pdf.html
     - dl/epub.html
+    - dl/mp3.html
+    # Same for the paid audiobook editions — one page per store.
+    - go/listen-spotify.html
+    - go/listen-elevenreader.html
     # Same trick for "buy me a coffee" clicks — one page per placement, since
     # the path is all Cloudflare records.
     - go/kofi-sidebar.html

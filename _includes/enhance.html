@@ -15,8 +15,13 @@
   var LINKEDIN_URL = 'https://www.linkedin.com/in/krever/';
   var X_URL = 'https://x.com/Krever01';
   var HOME_URL = 'https://w.pitula.me';
-  // ElevenReader share link — paste the real URL after publishing the audiobook.
-  var AUDIOBOOK_URL = 'https://elevenreader.io/audiobooks/fintech-engineering-handbook/rPOltSogE64bCrbomHCu'; // e.g. 'https://elevenreader.io/...' ; empty = hidden
+  // Audiobook. Each URL is optional: empty = that row is hidden, all empty =
+  // the whole "Listen" group is hidden. The MP3 is free; the store editions
+  // cost AUDIOBOOK_PRICE, which is shown on their rows.
+  var AUDIOBOOK_PRICE = '$5';
+  var AUDIOBOOK_MP3_URL = 'https://github.com/Krever/fintech-engineering-handbook/releases/download/audiobook-v1/ElevenLabs_fintech-eng_v2.mp3';
+  var AUDIOBOOK_SPOTIFY_URL = '';
+  var AUDIOBOOK_ELEVENREADER_URL = '';
   // Tip jar. Empty = every support CTA below stays hidden.
   var KOFI_URL = 'https://ko-fi.com/krever';
 
@@ -48,12 +53,17 @@
   // sit at the same optical weight as the Bootstrap icons on the buttons. Each
   // viewBox is tightened to its path's ink so all three read at the same size:
   // the stock LinkedIn box (448x512) letterboxes, rendering it visibly small.
-  function mark(viewBox, d) {
-    return '<svg class="fx-mark" viewBox="' + viewBox + '" aria-hidden="true">' +
+  function mark(viewBox, d, modifier) {
+    var cls = 'fx-mark' + (modifier ? ' ' + modifier : '');
+    return '<svg class="' + cls + '" viewBox="' + viewBox + '" aria-hidden="true">' +
       '<path fill="currentColor" d="' + d + '"/></svg>';
   }
   var GH_MARK = mark('0 0 24 24', 'M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.51 11.51 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12');
   var LI_MARK = mark('0 0 448 448', 'M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.29 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z');
+  // ElevenReader's half-sun mark, traced from the app icon at
+  // elevenreader.io/apple-touch-icon.png (they publish no vector). It is wider
+  // than tall, so it gets its own box size (see .fx-mark--wide).
+  var ELEVEN_MARK = mark('0 3.5 24 17', 'M0.71 11.37L0.04 13.83L0.04 14.01L6.45 15.73L6.52 15.80L6.41 15.91L0.00 17.66L0.75 20.27L0.93 20.27L8.83 18.11L9.65 17.81L10.21 17.29L10.51 16.70L10.58 16.25L10.62 14.68L13.34 14.68L13.38 16.25L13.53 16.88L13.75 17.29L14.16 17.70L14.61 17.96L22.10 19.98L22.73 20.20L22.92 20.20L23.03 20.27L23.25 20.24L23.96 17.66L18.11 16.06L17.59 15.91L17.44 15.80L17.52 15.73L23.96 13.98L23.25 11.37L23.18 11.33L16.84 13.08L16.70 13.04L21.47 8.16L19.49 6.22L14.76 11.03L14.68 10.96L16.17 5.48L16.17 5.29L16.40 4.58L16.36 4.36L16.17 4.36L13.75 3.69L12.00 10.25L11.93 10.21L10.21 3.69L7.57 4.40L7.71 5.18L9.13 10.55L9.28 10.92L9.20 11.03L4.47 6.22L2.50 8.20L7.27 13.01L7.23 13.08L0.97 11.37Z', 'fx-mark--wide');
   var X_MARK = mark('0 0 24 24', 'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932zm-1.291 19.491h2.039L6.486 3.24H4.298l13.312 17.404z');
 
   // ── The reader panel ──────────────────────────────────────────────────────
@@ -63,10 +73,6 @@
   // shape the platform itself established.
 
   function getGroup() {
-    var listen = AUDIOBOOK_URL
-      ? '<a class="fx-btn fx-btn--wide" href="' + AUDIOBOOK_URL + '" target="_blank" rel="noopener">' +
-          '<i class="bi bi-headphones"></i>Audiobook</a>'
-      : '';
     return '' +
       '<div class="fx-group">' +
         '<span class="fx-group__label">Take it with you</span>' +
@@ -74,8 +80,36 @@
           '<a class="fx-btn" href="index.pdf"  download><i class="bi bi-file-earmark-arrow-down"></i>PDF</a>' +
           '<a class="fx-btn" href="index.epub" download><i class="bi bi-book"></i>EPUB</a>' +
         '</div>' +
-        listen +
       '</div>';
+  }
+
+  // One icon button per audiobook edition, all on one line, each with its
+  // price beside the icon: "Free" for the MP3, the store price for the paid
+  // editions. The reader sees the cost before they click; the name is in the
+  // tooltip and the aria-label.
+  function listenGroup() {
+    var buttons =
+      listenButton(AUDIOBOOK_MP3_URL, '<i class="bi bi-download"></i>', 'Download MP3', 'Free', 'dl/mp3.html', true) +
+      listenButton(AUDIOBOOK_SPOTIFY_URL, '<i class="bi bi-spotify"></i>', 'Spotify', AUDIOBOOK_PRICE, 'go/listen-spotify.html', false) +
+      listenButton(AUDIOBOOK_ELEVENREADER_URL, ELEVEN_MARK, 'ElevenReader', AUDIOBOOK_PRICE, 'go/listen-elevenreader.html', false);
+    if (!buttons) return '';
+    return '' +
+      '<div class="fx-group">' +
+        '<span class="fx-group__label">Listen</span>' +
+        '<div class="fx-row">' + buttons + '</div>' +
+      '</div>';
+  }
+
+  function listenButton(url, icon, name, price, beacon, free) {
+    if (!url) return '';
+    var open = free ? ' download' : ' target="_blank" rel="noopener"';
+    var label = name + ' (' + (free ? 'free' : price) + ')';
+    return '' +
+      '<a class="fx-btn fx-listen" href="' + url + '"' + open + ' data-ping="' + beacon + '"' +
+        ' title="' + label + '" aria-label="' + label + '">' +
+        icon +
+        '<span class="fx-price" aria-hidden="true">' + price + '</span>' +
+      '</a>';
   }
 
   // Starring and tipping are the same ask at two prices, so they share a line:
@@ -120,7 +154,7 @@
   }
 
   function panelMarkup(where) {
-    return getGroup() + supportGroup(where) + authorLine();
+    return getGroup() + listenGroup() + supportGroup(where) + authorLine();
   }
 
   // Desktop/tablet (>=768px) gets the panel pinned below the left TOC. Below
@@ -286,6 +320,14 @@
     }, { passive: true });
   }
 
+  // Audiobook rows name their own beacon page, one per edition.
+  function trackListenClicks() {
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-ping]');
+      if (a) ping(a.dataset.ping);
+    }, { passive: true });
+  }
+
   function trackReading() {
     // Once per tab session per milestone: a reader who lingers is one reader,
     // not one per re-scroll.
@@ -329,7 +371,7 @@
 
   function init() {
     injectPanel(); injectSupportCard(); scrollspy();
-    trackDownloads(); trackSupportClicks(); trackReading(); loadStars();
+    trackDownloads(); trackSupportClicks(); trackListenClicks(); trackReading(); loadStars();
   }
 
   if (document.readyState === 'loading') {
