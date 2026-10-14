@@ -280,9 +280,10 @@ nav[role="doc-toc"] .nav-link.active {
 }
 .fx-btn--accent:hover { background: $teal; }
 
-// Audiobook buttons: icon only, with a price chip beside it ("Free" or the
-// store price), so the reader sees the cost before the click. The icons are a
-// little larger than on labelled buttons, because they carry the meaning alone.
+// Audiobook buttons: icon only; the paid editions have a price chip beside the
+// icon, so the reader sees the cost before the click, the free ones have no
+// chip. The icons are a little larger than on labelled buttons, because they
+// carry the meaning alone.
 .fx-listen { gap: 0.35rem; padding-inline: 0.35rem; }
 // The row is a grid, one column per button, however many URLs are set: each
 // column is at least as wide as its content, and the spare width is shared

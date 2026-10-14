@@ -18,7 +18,8 @@
   var HOME_URL = 'https://w.pitula.me';
   // Audiobook. Each URL is optional: empty = its button is hidden, all empty =
   // the whole "Listen" group is hidden. The MP3 (played here or downloaded) is
-  // free; the store editions cost AUDIOBOOK_PRICE, which is shown on them.
+  // free and carries no price; the store editions cost AUDIOBOOK_PRICE, which
+  // is shown on them.
   var AUDIOBOOK_PRICE = '$5';
   var AUDIOBOOK_MP3_URL = 'https://github.com/Krever/fintech-engineering-handbook/releases/download/audiobook-v1/ElevenLabs_fintech-eng_v2.mp3';
   var AUDIOBOOK_SPOTIFY_URL = '';
@@ -84,17 +85,18 @@
       '</div>';
   }
 
-  // One icon button per way to listen, laid out on a grid (see theme.scss),
-  // each with its price beside the icon: "Free" for playing here and for the
-  // MP3 download, the store price for the paid editions. The reader sees the
-  // cost before they click; the name is in the tooltip and the aria-label.
+  // One icon button per way to listen, laid out on a grid (see theme.scss).
+  // The paid editions show their store price beside the icon, so the reader
+  // sees the cost before they click; the free ones (play here, MP3 download)
+  // show only the icon, as free is the default everywhere on this site. The
+  // name is in the tooltip and the aria-label.
   //
   // Playing here is two steps: see the audiobook player section below.
   function listenGroup() {
     var mp3 = AUDIOBOOK_MP3_URL;
     var buttons =
-      (mp3 ? listenButton('button type="button" class="fx-btn fx-listen fx-play"', '<i class="bi bi-play-fill"></i>', 'Play here', 'Free') : '') +
-      (mp3 ? listenLink(mp3, ' download', '<i class="bi bi-download"></i>', 'Download MP3', 'Free', 'dl/mp3.html') : '') +
+      (mp3 ? listenButton('button type="button" class="fx-btn fx-listen fx-play"', '<i class="bi bi-play-fill"></i>', 'Play here') : '') +
+      (mp3 ? listenLink(mp3, ' download', '<i class="bi bi-download"></i>', 'Download MP3', '', 'dl/mp3.html') : '') +
       listenLink(AUDIOBOOK_SPOTIFY_URL, ' target="_blank" rel="noopener"', '<i class="bi bi-spotify"></i>', 'Spotify', AUDIOBOOK_PRICE, 'go/listen-spotify.html') +
       listenLink(AUDIOBOOK_ELEVENREADER_URL, ' target="_blank" rel="noopener"', ELEVEN_MARK, 'ElevenReader', AUDIOBOOK_PRICE, 'go/listen-elevenreader.html');
     if (!buttons) return '';
@@ -112,13 +114,14 @@
   }
 
   // `open` is the start tag's content, e.g. 'a href="…"'; the tag name ends
-  // at the first space.
+  // at the first space. `price` is optional: empty = no price pill, and the
+  // label is the name alone.
   function listenButton(open, icon, name, price) {
     var tag = open.split(' ')[0];
-    var label = name + ' (' + price + ')';
+    var label = price ? name + ' (' + price + ')' : name;
     return '' +
       '<' + open + ' title="' + label + '" aria-label="' + label + '">' +
-        icon + '<span class="fx-price" aria-hidden="true">' + price + '</span>' +
+        icon + (price ? '<span class="fx-price" aria-hidden="true">' + price + '</span>' : '') +
       '</' + tag + '>';
   }
 
