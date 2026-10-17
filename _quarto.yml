@@ -28,6 +28,13 @@ project:
     - read/engaged.html
     - read/deep.html
 
+# Counts the words in index.qmd at render time and hands them to the title
+# block as a "Length" field (see _includes/title-metadata.html). A little
+# below the usual 230-250 wpm: dense technical prose, read slowly.
+filters:
+  - tools/reading-time.lua
+reading-time-wpm: 200
+
 # Single source of truth: index.qmd. Every output below is generated from it.
 format:
   # Beautiful, scannable single page with a sticky left-hand table of contents.
@@ -35,6 +42,9 @@ format:
     theme:
       - cosmo
       - theme.scss
+    # Adds the "Length" field to Quarto's default Author/Modified title block.
+    template-partials:
+      - _includes/title-metadata.html
     include-in-header:
       - _includes/head.html
     toc: true

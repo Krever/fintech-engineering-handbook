@@ -62,6 +62,16 @@ body {
   color: $ink-soft;
 }
 
+// Quarto hardcodes this grid to two columns, which orphans our third field
+// (Length) onto a row of its own. auto-fit collapses the empty tracks, so the
+// three sit side by side on desktop and fold to two, then one, as it narrows.
+// The columns size to their content above a 10rem floor: the title column is
+// 622px wide at 1280px, too narrow for three equal columns that fit the
+// Length text (204px) without wrapping it.
+#title-block-header.quarto-title-block.default .quarto-title-meta {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, max-content));
+}
+
 // Headings ────────────────────────────────────────────────────────────────
 h1, h2, h3, h4 {
   font-family: $headings-font-family;
@@ -204,9 +214,9 @@ nav[role="doc-toc"] .nav-link.active {
 .reader-panel { font-family: $font-family-sans-serif; }
 
 .sidebar-footer {
-  margin-top: 1.4rem;
-  padding-top: 1.2rem;
-  padding-bottom: 1.75rem;
+  margin-top: 1.1rem;
+  padding-top: 0.95rem;
+  padding-bottom: 1.4rem;
   border-top: 1px solid $rule;
 }
 
@@ -217,16 +227,16 @@ nav[role="doc-toc"] .nav-link.active {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.4rem;
+  gap: 0.3rem;
 }
-.fx-group + .fx-group { margin-top: 1.45rem; }
+.fx-group + .fx-group { margin-top: 1rem; }
 .fx-group__label {
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: $ink-soft;
-  margin-bottom: 0.2rem;   // + the 0.4rem gap = 0.6rem under the label
+  margin-bottom: 0.1rem;   // + the 0.3rem gap = 0.4rem under the label
 }
 // Buttons sharing a line split it evenly; the GitHub badge is the exception,
 // sizing to its count so the tip jar beside it keeps a full-length label.
@@ -258,9 +268,9 @@ nav[role="doc-toc"] .nav-link.active {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 2.2rem;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.82rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.78rem;   // every row (3 downloads; tip jar + star badge) fits the sidebar on one line
   font-weight: 500;
   letter-spacing: 0.01em;
   color: $teal-deep;
@@ -294,15 +304,18 @@ nav[role="doc-toc"] .nav-link.active {
   grid-auto-columns: minmax(max-content, 1fr);
 }
 // Where they do not fit on one line, the grid goes to two columns, and a
-// last button alone on its row spans both. Measured needs: four buttons
-// about 330px (more than the sidebar and the phone card), three about 255px.
+// last button alone on its row spans both. Measured needs (price chip "$",
+// phone-card font size): four buttons about 215px, three about 175px. Both
+// fit the sidebar (262px) and the phone card (246px on a 360px phone), so the
+// split only happens on narrower screens. Re-measure if the chip text or the
+// button padding changes.
 .fx-group--listen { container-type: inline-size; }
 // A mixin, not a placeholder: @extend cannot reach into a @container block.
 @mixin fx-two-columns { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
-@container (max-width: 340px) {
+@container (max-width: 222px) {
   .fx-row--listen:has(> :nth-child(4)) { @include fx-two-columns; }
 }
-@container (max-width: 258px) {
+@container (max-width: 180px) {
   .fx-row--listen:has(> :nth-child(3)) { @include fx-two-columns; }
   .fx-row--listen:has(> :nth-child(3)) > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
@@ -321,6 +334,30 @@ nav[role="doc-toc"] .nav-link.active {
   transition: background 0.14s ease, color 0.14s ease;
 }
 .fx-btn:hover .fx-price { color: #fff; background: rgba(255, 255, 255, 0.2); }
+
+// Other books under the author, one plain link per line. The title wraps if
+// it must; the glyph stays on the first line, aligned with the text's cap
+// height.
+.fx-see-also {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 0.25rem;
+}
+.fx-see-also__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: $ink;   // like the author link: quiet by default, teal on hover
+  text-decoration: none !important;
+  transition: color 0.12s ease;
+}
+.fx-see-also__item .bi { flex: 0 0 auto; margin-top: 0.1em; color: $ink-soft; }
+.fx-see-also__item:hover,
+.fx-see-also__item:hover .bi { color: $teal; }
 
 // Audiobook player: shown above the Listen buttons, in place of the play
 // button, once that is pressed (see morph in enhance.html). One hairline box
@@ -386,7 +423,7 @@ nav[role="doc-toc"] .nav-link.active {
 .gh-badge {
   display: inline-flex;
   align-items: stretch;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: $teal-deep;
   text-decoration: none !important;
@@ -400,8 +437,8 @@ nav[role="doc-toc"] .nav-link.active {
 .gh-badge__count {
   display: inline-flex;
   align-items: center;
-  min-height: 2.2rem;
-  padding: 0.4rem 0.75rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.5rem;
   transition: background 0.14s ease, color 0.14s ease;
 }
 .gh-badge__main { gap: 0.4rem; background: rgba(255, 255, 255, 0.7); }
@@ -419,24 +456,31 @@ nav[role="doc-toc"] .nav-link.active {
 
 .fx-mark { display: block; flex: 0 0 auto; width: 15px; height: 15px; }
 
-// Byline: the quietest thing in the panel, and the only text link in it.
+// Author row: the name and the social marks, in the same type as the book
+// links under it.
 .fx-author {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  align-self: stretch;
   gap: 0.75rem;
-  margin-top: 1.5rem;
-  padding-top: 1.05rem;
-  border-top: 1px solid $rule;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  line-height: 1.25;   // as the "See also" lines; the inherited 1.7 adds air round the name
 }
+// The name carries a quill, set like the book glyph on the lines below, so
+// the two columns line up.
 .fx-author__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   color: $ink;
   font-weight: 500;
   text-decoration: none !important;
   transition: color 0.12s ease;
 }
-.fx-author__name:hover { color: $teal; }
+.fx-author__name .bi { color: $ink-soft; }
+.fx-author__name:hover,
+.fx-author__name:hover .bi { color: $teal; }
 .fx-author__links { display: inline-flex; align-items: center; gap: 0.7rem; }
 .fx-author__links a {
   display: inline-flex;
@@ -452,6 +496,7 @@ nav[role="doc-toc"] .nav-link.active {
 .fx-btn::after,
 .gh-badge::after,
 .fx-author a::after,
+.fx-see-also__item::after,
 .support-card__btn::after { content: none !important; display: none !important; }
 
 // ── The panel on mobile ─────────────────────────────────────────────────────
@@ -463,19 +508,19 @@ nav[role="doc-toc"] .nav-link.active {
   .grab-card {
     display: block;
     margin: 1.6rem 0 2.4rem;
-    padding: 1.15rem 1.2rem 1.25rem;
+    padding: 1.15rem 1rem 1.25rem;
     border: 1px solid rgba(11, 124, 114, 0.28);
     border-radius: 12px;
     // Faint paper-on-teal wash so it reads as an aside, not body copy.
     background:
       linear-gradient(180deg, rgba(11, 124, 114, 0.05), rgba(11, 124, 114, 0.02));
   }
-  .grab-card .fx-btn,
-  .grab-card .gh-badge { font-size: 0.9rem; font-weight: 600; }
+  // Same type and padding as in the sidebar; only the buttons are taller, for
+  // the tap targets. The card row is 253px on a 360px phone, and every row
+  // stays on one line there.
   .grab-card .fx-btn,
   .grab-card .gh-badge__main,
   .grab-card .gh-badge__count { min-height: 2.7rem; }
-  .grab-card .fx-author { font-size: 0.86rem; }
 }
 
 // ── The ask at the end of the document ──────────────────────────────────────

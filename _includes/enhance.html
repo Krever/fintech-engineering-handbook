@@ -2,7 +2,7 @@
 // Everything this single-document, left-TOC layout needs that Quarto can't
 // express declaratively:
 //   1. The reader panel — downloads, the audiobook (with an in-page player),
-//      the tip jar, the GitHub badge and the author line — pinned below the
+//      the tip jar, the GitHub badge, the author and other books — pinned below the
 //      TOC, and repeated as a card under the title on mobile, where the TOC
 //      is hidden.
 //   2. A scrollspy that highlights the current section as you scroll/click
@@ -17,15 +17,21 @@
   var X_URL = 'https://x.com/Krever01';
   var HOME_URL = 'https://w.pitula.me';
   // Audiobook. Each URL is optional: empty = its button is hidden, all empty =
-  // the whole "Listen" group is hidden. The MP3 (played here or downloaded) is
-  // free and carries no price; the store editions cost AUDIOBOOK_PRICE, which
-  // is shown on them.
-  var AUDIOBOOK_PRICE = '$5';
+  // the whole "Listen" group is hidden. The MP3 is free: it is played here
+  // from "Listen" and downloaded from "Take it with you", with no price on
+  // either; the store editions cost AUDIOBOOK_PRICE, which is shown on them.
+  var AUDIOBOOK_PRICE = '$';
   var AUDIOBOOK_MP3_URL = 'https://github.com/Krever/fintech-engineering-handbook/releases/download/audiobook-v1/ElevenLabs_fintech-eng_v2.mp3';
-  var AUDIOBOOK_SPOTIFY_URL = '';
+  var AUDIOBOOK_SPOTIFY_URL = 'https://open.spotify.com/show/04lRhG4UXj7CKM58IeTszS';
   var AUDIOBOOK_ELEVENREADER_URL = 'https://elevenreader.io/audiobooks/fintech-engineering-handbook/pj_i8uRCY6ahf96dxgkgPqt';
   // Tip jar. Empty = every support CTA below stays hidden.
   var KOFI_URL = 'https://ko-fi.com/krever';
+  // Other books by the author, listed under the author's name. An entry with
+  // an empty URL is skipped; no entry with a URL = no list. Set the URL once
+  // the book is public.
+  var SEE_ALSO = [
+    // { title: 'The Developer Communication Handbook', url: 'https://example.com/developer-communication-handbook' }  // TODO placeholder URL
+  ];
 
   // Star count is fetched live from the GitHub API on each visit, cached in
   // localStorage so a returning reader (and a reader hopping between sections)
@@ -74,29 +80,35 @@
   // is the one exception, and only because a star count wants the split-badge
   // shape the platform itself established.
 
+  // The offline copies: PDF, EPUB and, when there is one, the audiobook MP3.
+  // All free, so no price on any of them.
   function getGroup() {
+    var mp3 = AUDIOBOOK_MP3_URL
+      ? '<a class="fx-btn" href="' + AUDIOBOOK_MP3_URL + '" download title="Audiobook (MP3)" aria-label="Audiobook (MP3)" data-ping="dl/mp3.html">' +
+          '<i class="bi bi-headphones"></i>MP3</a>'
+      : '';
     return '' +
       '<div class="fx-group">' +
         '<span class="fx-group__label">Take it with you</span>' +
         '<div class="fx-row">' +
           '<a class="fx-btn" href="index.pdf"  download><i class="bi bi-file-earmark-arrow-down"></i>PDF</a>' +
           '<a class="fx-btn" href="index.epub" download><i class="bi bi-book"></i>EPUB</a>' +
+          mp3 +
         '</div>' +
       '</div>';
   }
 
-  // One icon button per way to listen, laid out on a grid (see theme.scss).
-  // The paid editions show their store price beside the icon, so the reader
-  // sees the cost before they click; the free ones (play here, MP3 download)
-  // show only the icon, as free is the default everywhere on this site. The
-  // name is in the tooltip and the aria-label.
+  // One icon button per way to listen now, laid out on a grid (see
+  // theme.scss). The paid editions show their store price beside the icon, so
+  // the reader sees the cost before they click; playing here is free and shows
+  // only the icon, as free is the default everywhere on this site. The name is
+  // in the tooltip and the aria-label.
   //
   // Playing here is two steps: see the audiobook player section below.
   function listenGroup() {
     var mp3 = AUDIOBOOK_MP3_URL;
     var buttons =
       (mp3 ? listenButton('button type="button" class="fx-btn fx-listen fx-play"', '<i class="bi bi-play-fill"></i>', 'Play here') : '') +
-      (mp3 ? listenLink(mp3, ' download', '<i class="bi bi-download"></i>', 'Download MP3', '', 'dl/mp3.html') : '') +
       listenLink(AUDIOBOOK_SPOTIFY_URL, ' target="_blank" rel="noopener"', '<i class="bi bi-spotify"></i>', 'Spotify', AUDIOBOOK_PRICE, 'go/listen-spotify.html') +
       listenLink(AUDIOBOOK_ELEVENREADER_URL, ' target="_blank" rel="noopener"', ELEVEN_MARK, 'ElevenReader', AUDIOBOOK_PRICE, 'go/listen-elevenreader.html');
     if (!buttons) return '';
@@ -160,19 +172,32 @@
       '</a>';
   }
 
-  function authorLine() {
+  // The author, as a group like the others: the name (a link home) and the
+  // social marks on one row, then the other books, one plain link per line.
+  // Not buttons, because a title is long and must be free to wrap, which
+  // buttons never do. With no book to list, the label is "Author" alone.
+  function authorGroup() {
+    var books = SEE_ALSO.filter(function (b) { return b.url; }).map(function (b) {
+      return '<a class="fx-see-also__item" href="' + b.url + '" target="_blank" rel="noopener">' +
+        '<i class="bi bi-book"></i><span>' + b.title + '</span></a>';
+    }).join('');
     return '' +
+      '<div class="fx-group">' +
+        '<span class="fx-group__label">' + (books ? 'Author &amp; more' : 'Author') + '</span>' +
       '<div class="fx-author">' +
-        '<a class="fx-author__name" href="' + HOME_URL + '" target="_blank" rel="noopener">Voytek Pitula</a>' +
+        '<a class="fx-author__name" href="' + HOME_URL + '" target="_blank" rel="noopener">' +
+          '<i class="bi bi-feather"></i><span>Voytek Pitula</span></a>' +
         '<span class="fx-author__links">' +
           '<a href="' + LINKEDIN_URL + '" target="_blank" rel="noopener" aria-label="LinkedIn">' + LI_MARK + '</a>' +
           '<a href="' + X_URL + '" target="_blank" rel="noopener" aria-label="X">' + X_MARK + '</a>' +
         '</span>' +
+      '</div>' +
+      (books ? '<div class="fx-see-also">' + books + '</div>' : '') +
       '</div>';
   }
 
   function panelMarkup(where) {
-    return getGroup() + listenGroup() + supportGroup(where) + authorLine();
+    return getGroup() + listenGroup() + supportGroup(where) + authorGroup();
   }
 
   // Desktop/tablet (>=768px) gets the panel pinned below the left TOC. Below
